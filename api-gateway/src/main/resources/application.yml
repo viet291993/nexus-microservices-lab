@@ -1,48 +1,50 @@
 server:
-  port: 8080
+  port: 8080 # Cổng chạy của ứng dụng API Gateway. Toàn bộ traffic/yêu cầu từ Front-end sẽ chỉ đi qua cổng này.
 
 spring:
   main:
-    web-application-type: reactive
+    web-application-type: reactive # Khai báo bắt buộc chạy Gateway ở môi trường WebFlux (Non-blocking Netty) thay vì Tomcat (Spring MVC).
   application:
-    name: api-gateway
+    name: api-gateway # Tên định danh chính thức của Gateway khi nó tự giới thiệu bản thân trên bảng theo dõi của Eureka Server.
   cloud:
     gateway:
       server:
         webflux:
           discovery:
             locator:
-              enabled: true
-              lower-case-service-id: true
+              enabled: true # Tự động tạo route mapping dựa trên danh sách tên Service đăng ký có sẵn trên Eureka.
+              lower-case-service-id: true # Ép viết thường các service ID trên thanh địa chỉ thay vì phải ghi hoa (ví dụ `user-service`).
           routes:
-            - id: user-service # Đây là ví dụ về một route cơ bản
-              uri: lb://USER-SERVICE # Chuyển hướng tới service qua Eureka Load Balancer
+            # ================= ROUTE 1: Khai báo User Service ================= #
+            - id: user-service # ID định danh tùy ý đặt cho Route này.
+              uri: lb://USER-SERVICE # Giao thức 'lb://' yêu cầu Gateway nhờ Spring LoadBalancer hỏi Eureka IP thật sự đang giữ tên "USER-SERVICE" (Có thể có tới 3 máy chủ chạy User Service phân vùng).
               predicates:
-                - Path=/api/v1/users/**
+                - Path=/api/v1/users/** # Điều kiện nhảy: Bất kỳ URL nào từ Client gọi bắt đầu bằng `/api/v1/users/...` đều sẽ chui vào điều hướng này.
               filters:
-                - AuthenticationFilter
-                - StripPrefix=1
+                - AuthenticationFilter # Mấu chốt Bảo Mật: Trỏ thẳng vào Class `AuthenticationFilter` custom ta đã tạo. Request sẽ rẽ ngang sang logic Java bắt Header xem Token có còn zin không mới cho qua.
+                - StripPrefix=1 # Bóc tách URL: Cắt bỏ cụm từ đầu tiên của đường dẫn (ở đây là '/api') trước khi chuyển nó vào backend bên trong. 
             
+            # ================= ROUTE 2: Khai báo Product Service ================= #
             - id: product-service
               uri: lb://PRODUCT-SERVICE
               predicates:
                 - Path=/api/v1/products/**
               filters:
-                - AuthenticationFilter
+                - AuthenticationFilter # Filter này tái sử dụng triệt để ở bất kỳ route mới nào bạn đăng ký ở đây!
                 - StripPrefix=1
 
 eureka:
   instance:
     hostname: localhost
-    prefer-ip-address: true
+    prefer-ip-address: true # Thay vì báo danh bằng tên host hệ thống (hay bị lỗi không trỏ được trên Docker), bắt buộc Eureka nạp IP số thập phân cho an toàn.
   client:
-    fetch-registry: true
-    register-with-eureka: true
+    fetch-registry: true # Lệnh Gateway cứ đều đặn kéo danh bạ các URL Service từ Eureka Server về nhớ đệm (Để trỏ uri nhạy bén hơn).
+    register-with-eureka: true # Đưa chính bản thân Gateway lên Eureka báo danh như 1 node mạng công khai.
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/ # Trỏ hướng mục tiêu trung tâm - là Eureka Server chạy ở cổng 8761.
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,gateway # Theo dõi sức khỏe Actuator: Mở các đường truyền nội bộ (/actuator/gateway/routes) để kiểm tra các URI thiết lập đã sống chưa.
