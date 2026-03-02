@@ -20,6 +20,7 @@ spring:
               predicates:
                 - Path=/api/v1/users/**
               filters:
+                - AuthenticationFilter
                 - StripPrefix=1
             
             - id: product-service
@@ -27,6 +28,7 @@ spring:
               predicates:
                 - Path=/api/v1/products/**
               filters:
+                - AuthenticationFilter
                 - StripPrefix=1
 
 eureka:
