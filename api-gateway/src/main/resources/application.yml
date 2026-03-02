@@ -6,6 +6,10 @@ spring:
     web-application-type: reactive # Khai báo bắt buộc chạy Gateway ở môi trường WebFlux (Non-blocking Netty) thay vì Tomcat (Spring MVC).
   application:
     name: api-gateway # Tên định danh chính thức của Gateway khi nó tự giới thiệu bản thân trên bảng theo dõi của Eureka Server.
+  data:
+    redis:
+      host: localhost
+      port: 6379 
   cloud:
     gateway:
       server:
@@ -22,6 +26,11 @@ spring:
                 - Path=/api/v1/users/** # Điều kiện nhảy: Bất kỳ URL nào từ Client gọi bắt đầu bằng `/api/v1/users/...` đều sẽ chui vào điều hướng này.
               filters:
                 - AuthenticationFilter # Mấu chốt Bảo Mật: Trỏ thẳng vào Class `AuthenticationFilter` custom ta đã tạo. Request sẽ rẽ ngang sang logic Java bắt Header xem Token có còn zin không mới cho qua.
+                - name: RequestRateLimiter # Giới hạn lưu lượng chống DDOS/Spam.
+                  args:
+                    redis-rate-limiter.replenishRate: 10 # Số "vé" khôi phục mỗi giây. Nghĩa là trung bình người dùng làm được căng nhất 10 Request mỗi giây.
+                    redis-rate-limiter.burstCapacity: 20 # Sức chứa rổ vé tối đa. Nếu Spike thì có thể lên được 20 requests cùng thời điểm trước khi quăng lỗi HTTP 429 Too many Requests.
+                    key-resolver: "#{@clientIpKeyResolver}" # Tên Bean Java chịu trách nhiệm xác định "Thế nào là 1 nguồn request?" (Ở đây ta chọn xác định theo IP truy cập).
                 - StripPrefix=1 # Bóc tách URL: Cắt bỏ cụm từ đầu tiên của đường dẫn (ở đây là '/api') trước khi chuyển nó vào backend bên trong. 
             
             # ================= ROUTE 2: Khai báo Product Service ================= #
@@ -31,6 +40,11 @@ spring:
                 - Path=/api/v1/products/**
               filters:
                 - AuthenticationFilter # Filter này tái sử dụng triệt để ở bất kỳ route mới nào bạn đăng ký ở đây!
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@clientIpKeyResolver}"
                 - StripPrefix=1
 
 eureka:
