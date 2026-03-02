@@ -19,6 +19,20 @@ spring:
               enabled: true # Tự động tạo route mapping dựa trên danh sách tên Service đăng ký có sẵn trên Eureka.
               lower-case-service-id: true # Ép viết thường các service ID trên thanh địa chỉ thay vì phải ghi hoa (ví dụ `user-service`).
           routes:
+            # ================= ROUTE 0: Khai báo Auth Service ================= #
+            - id: auth-service
+              uri: lb://AUTH-SERVICE
+              predicates:
+                - Path=/api/v1/auth/**
+              filters:
+                # Không đi qua AuthenticationFilter vì Auth Service là nơi cấp phát JWT
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@clientIpKeyResolver}"
+                - StripPrefix=1
+
             # ================= ROUTE 1: Khai báo User Service ================= #
             - id: user-service # ID định danh tùy ý đặt cho Route này.
               uri: lb://USER-SERVICE # Giao thức 'lb://' yêu cầu Gateway nhờ Spring LoadBalancer hỏi Eureka IP thật sự đang giữ tên "USER-SERVICE" (Có thể có tới 3 máy chủ chạy User Service phân vùng).

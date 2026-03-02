@@ -1,0 +1,29 @@
+server:
+  port: 8081 # Mỗi service sẽ chạy ở một port riêng (Vd Auth chạy 8081, User chạy 8082, Product 8083)
+
+spring:
+  application:
+    name: auth-service # Định danh Eureka (phải đúng cú pháp này để Gateway gọi lb://AUTH-SERVICE)
+  datasource:
+    # URL kết nối CSDL PostgreSQL (Cần config sau với file Docker-Compose)
+    url: jdbc:postgresql://localhost:5432/nexus_db
+    username: myuser
+    password: mypassword
+  jpa:
+    hibernate:
+      ddl-auto: update # Tự động tạo/update bảng từ Entity
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+jwt:
+  # Base64 string "NexusMicroservicesLabSecretKeyForAuthService2026"
+  secret: 4e657875734d6963726f73657276696365734c61625365637265744b6579466f72417574685365727669636532303236
+  expiration: 86400000 # 1 ngày (mili giây)
