@@ -39,7 +39,7 @@ Sử dụng thuật toán Token Bucket được cấu hình qua `RedisRateLimite
 - [x] **Eureka Discovery Config:** Liên kết và lắng nghe địa chỉ từ Eureka Server (tại `localhost:8761`).
 - [x] **Global Auth Filter:** Xây dựng bean Custom Filter để bắt JWT Header.
 - [x] **Redis Rate Limiting:** Kích hoạt tính năng chặn Request Spam theo IP.
-- [ ] **CORS Policy:** Cấu hình Global CORS cho toàn bộ các web app trỏ tới.
+- [x] **CORS Policy:** Cấu hình Global CORS cho toàn bộ các web app trỏ tới.
 
 ---
 
