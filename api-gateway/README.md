@@ -36,7 +36,7 @@ Sử dụng thuật toán Token Bucket được cấu hình qua `RedisRateLimite
 
 - [x] **Project Initialization:** Setup cấu trúc Spring Boot 3.5 với Java 17, tích hợp Netty Server & WebFlux.
 - [x] **Basic Routing & Properties:** Map cấu hình Yaml với pattern nhận diện Loadbalancer (`lb://`). 
-- [ ] **Eureka Discovery Config:** Liên kết và lắng nghe địa chỉ từ Eureka Server (tại `localhost:8761`).
+- [x] **Eureka Discovery Config:** Liên kết và lắng nghe địa chỉ từ Eureka Server (tại `localhost:8761`).
 - [ ] **Global Auth Filter:** Xây dựng bean Custom Filter để bắt JWT Header.
 - [ ] **Redis Rate Limiting:** Kích hoạt tính năng chặn Request Spam theo IP.
 - [ ] **CORS Policy:** Cấu hình Global CORS cho toàn bộ các web app trỏ tới.
