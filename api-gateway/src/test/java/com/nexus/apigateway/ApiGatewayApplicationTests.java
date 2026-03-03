@@ -24,6 +24,7 @@ class ApiGatewayApplicationTests {
 	}
 
 	@Test
+	@SuppressWarnings("null")
 	void testAuthorizedRequest_ShouldReturn503Fallback() {
 		// Gửi 1 request CÓ Token giả lập (đã qua lớp bảo mật) nhưng Backend chưa dựng
 		// sẽ rớt vào Circuit Breaker Fallback (503)
