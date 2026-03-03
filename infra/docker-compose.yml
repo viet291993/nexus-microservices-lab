@@ -87,6 +87,23 @@ services:
       - kafka_data:/bitnami/kafka # Lưu trữ log cấu trúc (partition/offset) của Kafka.
     restart: unless-stopped
 
+  # ==========================================
+  # 6. IDENTITY & ACCESS MANAGEMENT (IAM) - KEYCLOAK
+  # ==========================================
+  # Mục đích: Giải pháp "chìa khóa trao tay" cho SSO, AuthN và AuthZ (OpenID Connect / OAuth2).
+  # Ứng dụng: Cấp phát Token JWT, thay thế hoàn toàn cho Auth Service tự build.
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: nexus-keycloak
+    ports:
+      - "8081:8080" # Giao diện quản trị Admin Console sẽ chạy ở cổng 8081 (Đề phòng cổng 8080 trùng với API Gateway)
+    environment:
+      KEYCLOAK_ADMIN: admin # Tài khoản đăng nhập trang quản trị
+      KEYCLOAK_ADMIN_PASSWORD: admin # Mật khẩu truy cập
+      # Keycloak mặc định bắt có DB/HTTPS. Start-dev ép cho nó hiểu đang chạy Local Lab (dùng local H2 DB & HTTP thường).
+    command: start-dev
+    restart: unless-stopped
+
 # ==========================================
 # KHAI BÁO VOLUMES (PERSISTENT STORAGE)
 # ==========================================
