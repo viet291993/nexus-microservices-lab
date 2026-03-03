@@ -16,7 +16,7 @@
 
 ## 🛠️ Tech Stack
 
-* **Core:** Java (Spring Boot), NodeJS (NestJS).
+* **Core:** Java (Spring Boot), NodeJS (NestJS), Python (FastAPI).
 * **Infra:** Docker, Docker-Compose, GitHub Actions.
 * **Storage:** Redis (Cache), SQL & NoSQL.
 * **Observability:** ELK Stack, Prometheus & Grafana.
