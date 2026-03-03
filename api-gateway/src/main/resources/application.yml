@@ -1,5 +1,7 @@
 spring:
   application:
+    # Trùng với tên file api-gateway.yml chứa cấu hình khổng lồ nằm bên trong thư mục config-repo của máy chủ Config.
     name: api-gateway
   config:
+    # Điểm đến nạp cấu hình sống (URL Config Server). Nếu không tìm thấy máy chủ 8888, gateway sẽ bỏ qua (nhờ chữ optional:)
     import: "optional:configserver:http://localhost:8888/"
