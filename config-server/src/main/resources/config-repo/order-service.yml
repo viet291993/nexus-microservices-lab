@@ -1,5 +1,5 @@
 server:
-  port: 8081 # Order Service sẽ chạy ở cổng 8081 (khác với Gateway ở 8080)
+  port: 8082 # Đổi 8081 → 8082 vì Keycloak container đang chiếm port 8081 (docker-compose: 8081:8080)
 
 spring:
   # CẤU HÌNH DATABASE (PostgreSQL)
