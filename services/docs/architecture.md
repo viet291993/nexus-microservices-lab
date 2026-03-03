@@ -36,6 +36,11 @@ Tài liệu này mô tả chi tiết kiến trúc chuyên sâu của hệ sinh t
 - **Inventory Service (NestJS):** Kafka Consumer nhận event, trừ kho MongoDB, gửi phản hồi. 👉 [Chi tiết](./inventory-service-kafka.md)
 - Luồng Saga hoàn chỉnh: `ORDER_CREATED` → trừ kho → `INVENTORY_CONFIRMED / FAILED` → rollback/confirm.
 
-### 🔲 Bước 4: Viết Saga Choreography Logic & CQRS — ĐANG CHỜ
-- Mô phỏng Data dữ liệu Order giả định. Order gửi lệnh vào Database -> Quăng luồng Kafka -> Inventory check logic trừ hàng -> Thành công báo OK, Thất bại gọi ngược Rollback.
-- CQRS: Triển khai luồng đọc dữ liệu từ một cơ sở dữ liệu riêng (Elasticsearch/Redis).
+### ✅ Bước 4a: Saga Choreography Logic — HOÀN THÀNH
+- Tạo `OrderEntity` (JPA) và `OrderRepository` để lưu đơn hàng vào PostgreSQL.
+- Nâng cấp `OrderController`: Lưu đơn PENDING vào DB trước → gửi Kafka → trả 202 Accepted.
+- Nâng cấp `InventoryResponseConsumer`: Nhận phản hồi Saga → tìm đơn trong DB → cập nhật CONFIRMED hoặc CANCELLED (Compensating Transaction / Rollback).
+- Thêm `GET /api/v1/orders` để kiểm tra trạng thái đơn hàng sau khi Saga chạy xong.
+
+### 🔲 Bước 4b: CQRS Pattern — ĐANG CHỜ
+- Triển khai luồng đọc dữ liệu từ một cơ sở dữ liệu riêng (Elasticsearch/Redis).
