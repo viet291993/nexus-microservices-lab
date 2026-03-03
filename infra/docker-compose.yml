@@ -1,0 +1,115 @@
+version: '3.8' # Phiên bản cú pháp Docker Compose. 3.8 là chuẩn phổ biến và ổn định hiện nay.
+
+services:
+  # ==========================================
+  # 1. DATABASE QUAN HỆ (RDBMS) - POSTGRESQL
+  # ==========================================
+  # Mục đích: Lưu trữ dữ liệu cần tính toàn vẹn cao, có quan hệ chặt chẽ (ACID).
+  # Ứng dụng trong Nexus: Order Service (Đơn hàng), User Service (Người dùng).
+  postgres:
+    image: postgres:15-alpine # Dùng bản Alpine siêu nhẹ, tiết kiệm RAM cho máy tính.
+    container_name: nexus-postgres # Đặt tên container cố định để dễ nhìn khi gõ lệnh 'docker ps'.
+    ports:
+      - "5432:5432" # Map port: [Port ở máy thật (để dùng DBeaver kết nối)] : [Port nội bộ của container]
+    environment:
+      POSTGRES_USER: nexus_user # User mặc định được tạo khi DB khởi chạy lần đầu.
+      POSTGRES_PASSWORD: nexus_password # Password (sẽ dùng để config trong Spring Boot/NestJS).
+      POSTGRES_DB: nexus_db # Tên database tự động được tạo sẵn.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Mount volume: Lưu dữ liệu ra ổ cứng vật lý để gõ 'docker-compose down' không bị mất data.
+    restart: unless-stopped # Tự động chạy lại nếu container bị crash hoặc khi bạn khởi động lại máy tính.
+
+  # ==========================================
+  # 2. DATABASE NoSQL - MONGODB
+  # ==========================================
+  # Mục đích: Lưu trữ dữ liệu phi cấu trúc, linh hoạt, tốc độ đọc/ghi cao.
+  # Ứng dụng trong Nexus: Product Catalog (Danh mục sản phẩm đa dạng thuộc tính), Inventory.
+  mongodb:
+    image: mongo:6.0 # Dùng bản 6.0 vì nó ổn định và tương thích tốt với các driver mới của Java/NodeJS.
+    container_name: nexus-mongodb
+    ports:
+      - "27017:27017" # Port giao tiếp chuẩn của MongoDB.
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root # Tài khoản quản trị cấp cao nhất (Root).
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword # Mật khẩu quản trị.
+    volumes:
+      - mongodb_data:/data/db # Thư mục vật lý lưu trữ BSON document của Mongo.
+    restart: unless-stopped
+
+  # ==========================================
+  # 3. CACHING LAYER - REDIS
+  # ==========================================
+  # Mục đích: Cache kết quả query, quản lý Session phân tán, làm Rate Limiting cho API Gateway.
+  redis:
+    image: redis:7-alpine # Bản Alpine siêu gọn nhẹ.
+    container_name: nexus-redis
+    ports:
+      - "6379:6379" # Port chuẩn của Redis.
+    volumes:
+      - redis_data:/data # Lưu snapshot dữ liệu RAM xuống đĩa cứng định kỳ.
+    restart: unless-stopped
+
+  # ==========================================
+  # 4. MESSAGE BROKER (TASK QUEUE) - RABBITMQ
+  # ==========================================
+  # Mục đích: Giao tiếp bất đồng bộ, đẩy task nặng vào hàng đợi (vd: Gửi email, xử lý ảnh).
+  rabbitmq:
+    image: rabbitmq:3-management-alpine # Bắt buộc dùng tag 'management' để có giao diện UI trực quan.
+    container_name: nexus-rabbitmq
+    ports:
+      - "5672:5672" # Port chuẩn AMQP để ứng dụng (Spring/Nest) kết nối và gửi/nhận message.
+      - "15672:15672" # Port của Dashboard quản lý. Mở trình duyệt gõ localhost:15672 để xem UI.
+    environment:
+      RABBITMQ_DEFAULT_USER: admin # Tài khoản đăng nhập UI và dùng trong code.
+      RABBITMQ_DEFAULT_PASS: admin123
+    restart: unless-stopped
+
+  # ==========================================
+  # 5. EVENT STREAMING - KAFKA (KRaft Mode)
+  # ==========================================
+  # Mục đích: Pub/Sub luồng sự kiện lớn, nền tảng cho Saga Pattern (Choreography) phân tán Transaction.
+  kafka:
+    image: bitnami/kafka:3.5 # Dùng image của Bitnami vì họ đóng gói config rất chuẩn và dễ dùng.
+    container_name: nexus-kafka
+    ports:
+      - "9092:9092" # Port chuẩn để code Java/NodeJS đẩy dữ liệu vào Topic.
+    environment:
+      # --- Cấu hình KRaft (Bỏ qua Zookeeper giúp giảm ngốn RAM) ---
+      KAFKA_CFG_NODE_ID: 1 # Định danh cho node Kafka hiện tại.
+      KAFKA_CFG_PROCESS_ROLES: broker,controller # Node này vừa lưu trữ message (broker) vừa quản lý cluster (controller).
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093 # Khai báo thông tin controller node.
+      # --- Cấu hình Mạng (Networking) ---
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093 # Port nội bộ container lắng nghe.
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092 # Địa chỉ public ra ngoài để ứng dụng biết đường kết nối.
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      ALLOW_PLAINTEXT_LISTENER: yes # Cho phép chạy không cần chứng chỉ bảo mật SSL (Vì đang code local).
+    volumes:
+      - kafka_data:/bitnami/kafka # Lưu trữ log cấu trúc (partition/offset) của Kafka.
+    restart: unless-stopped
+
+  # ==========================================
+  # 6. IDENTITY & ACCESS MANAGEMENT (IAM) - KEYCLOAK
+  # ==========================================
+  # Mục đích: Giải pháp "chìa khóa trao tay" cho SSO, AuthN và AuthZ (OpenID Connect / OAuth2).
+  # Ứng dụng: Cấp phát Token JWT, thay thế hoàn toàn cho Auth Service tự build.
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: nexus-keycloak
+    ports:
+      - "8081:8080" # Giao diện quản trị Admin Console sẽ chạy ở cổng 8081 (Đề phòng cổng 8080 trùng với API Gateway)
+    environment:
+      KEYCLOAK_ADMIN: admin # Tài khoản đăng nhập trang quản trị
+      KEYCLOAK_ADMIN_PASSWORD: admin # Mật khẩu truy cập
+      # Keycloak mặc định bắt có DB/HTTPS. Start-dev ép cho nó hiểu đang chạy Local Lab (dùng local H2 DB & HTTP thường).
+    command: start-dev
+    restart: unless-stopped
+
+# ==========================================
+# KHAI BÁO VOLUMES (PERSISTENT STORAGE)
+# ==========================================
+# Nơi Docker đăng ký các vùng nhớ vật lý trên máy host. Bắt buộc phải khai báo nếu bên trên có dùng.
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  kafka_data:
