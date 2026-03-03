@@ -40,8 +40,8 @@ Công nghệ thay đổi liên tục, nhưng tư duy giải quyết vấn đề 
 
 ### Phase 1: Foundation & Connectivity (Hạ tầng & Kết nối)
 - [ ] **Setup Infrastructure with Docker Compose:** Cấu hình tập trung Postgres, Redis, RabbitMQ và Kafka.
-- [ ] **API Gateway Implementation:** Thiết lập Spring Cloud Gateway, cấu hình dynamic routing và custom filters.
-- [ ] **Service Discovery:** Triển khai Netflix Eureka hoặc Consul để quản lý danh sách service.
+- [x] **API Gateway Implementation:** Thiết lập Spring Cloud Gateway, cấu hình dynamic routing và custom filters.
+- [x] **Service Discovery:** Triển khai Netflix Eureka hoặc Consul để quản lý danh sách service.
 - [ ] **Centralized Configuration:** Sử dụng Spring Cloud Config quản lý biến môi trường tập trung.
 
 ### Phase 2: Design Patterns & Consistency (Kiến trúc & Tính nhất quán)
@@ -51,9 +51,9 @@ Công nghệ thay đổi liên tục, nhưng tư duy giải quyết vấn đề 
 - [ ] **Idempotency Consumer:** Đảm bảo xử lý tin nhắn từ Broker không bị trùng lặp dữ liệu.
 
 ### Phase 3: Reliability & Performance (Độ tin cậy & Hiệu suất)
-- [ ] **Resilience4j Integration:** Triển khai Circuit Breaker và Retry cho giao tiếp synchronous (REST).
+- [x] **Resilience4j Integration:** Triển khai Circuit Breaker và Retry cho giao tiếp synchronous (REST).
 - [ ] **Distributed Caching:** Sử dụng Redis Cache Aside pattern để giảm tải cho database chính.
-- [ ] **Rate Limiting:** Cấu hình giới hạn request tại Gateway để bảo vệ hệ thống.
+- [x] **Rate Limiting:** Cấu hình giới hạn request tại Gateway để bảo vệ hệ thống.
 
 ### Phase 4: Observability (Khả năng giám sát)
 - [ ] **Centralized Logging (ELK):** Đẩy log từ tất cả service về Elasticsearch thông qua Logstash.
