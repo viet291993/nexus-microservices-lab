@@ -1,0 +1,27 @@
+### 1. KIỂM THỬ XÁC THỰC BẢO MẬT (CHƯA CÓ TOKEN)
+# Gửi request vào hệ thống (không đính kèm Token)
+# Kỳ vọng (Expected): 401 Unauthorized do Gateway chặn ngay từ vòng giữ xe.
+GET http://localhost:8080/api/v1/users/profile
+Accept: application/json
+
+###
+
+### 2. XIN CẤP PHÁT TOKEN TỪ KEYCLOAK (IAM)
+# Đăng nhập bằng tài khoản quản trị Admin mặc định
+# Kỳ vọng (Expected): Trong nội dung JSON trả về sẽ có 1 chuỗi dài ngoằng tên là "access_token"
+POST http://localhost:8081/realms/master/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id=admin-cli&username=admin&password=admin&grant_type=password
+
+###
+
+### 3. KIỂM THỬ XUYÊN THỦNG GATEWAY VÀ CIRCUIT BREAKER
+# Hãy thay thế dòng {YOUR_TOKEN_HERE} bên dưới bằng đoạn mã "access_token" bạn lấy được ở bước số 2:
+# Kỳ vọng (Expected): 
+# - Gateway không ngắt mạch ở vòng bảo vệ Security nữa (Mã sẽ khác 401).
+# - Do ta chưa dựng User Service (Backend), Request đi lọt sẽ dính Fallback Timeout / Nghẽn kết nối
+# -> Trả về lỗi 503 (Service Unavailable) với thông điệp JSON Tiếng việt thân thiện từ FallbackController.
+GET http://localhost:8080/api/v1/users/profile
+Authorization: Bearer {YOUR_TOKEN_HERE}
+Accept: application/json
