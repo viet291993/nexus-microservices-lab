@@ -1,3 +1,6 @@
+server:
+  port: 8761
+
 spring:
   application:
     # Tên của ứng dụng này khi gửi yêu cầu tới Config Server để xin file cấu hình tương ứng (Tên file phải giống tên này, vd: eureka-server.yml)

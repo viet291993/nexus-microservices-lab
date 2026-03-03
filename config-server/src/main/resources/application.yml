@@ -10,8 +10,8 @@ spring:
         config:
             server:
                 native:
-                    # Trỏ thẳng vào thư mục source file ở máy tính (thay vì classpath) để hỗ trợ cập nhật thay đổi file ngay lập tức (Hot Reloading) mà không cần build lại.
-                    search-locations: file://${user.dir}/config-server/src/main/resources/config-repo
+                    # classpath: luôn tìm được đúng vị trí dù mvn chạy từ bất kỳ thư mục nào.
+                    search-locations: classpath:/config-repo
 
 eureka:
     client:

@@ -1,5 +1,5 @@
 server:
-  port: 8081 # Order Service sẽ chạy ở cổng 8081 (khác với Gateway ở 8080)
+  port: 8083 # Order Service sẽ chạy ở cổng 8083 (Keycloak đã chiếm 8081)
 
 spring:
   # CẤU HÌNH DATABASE (PostgreSQL)

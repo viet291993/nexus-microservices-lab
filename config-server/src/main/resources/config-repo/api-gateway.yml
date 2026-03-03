@@ -57,6 +57,18 @@ spring:
                     fallbackUri: forward:/fallback/productServiceFallback
                 - StripPrefix=1
 
+            # ================= ROUTE 3: Khai báo Order Service ================= #
+            - id: order-service
+              uri: lb://ORDER-SERVICE
+              predicates:
+                - Path=/api/v1/orders/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: orderServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/orderServiceFallback
+                - StripPrefix=1
+
 eureka:
   instance:
     hostname: localhost
