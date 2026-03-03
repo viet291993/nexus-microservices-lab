@@ -1,0 +1,40 @@
+# Nexus: Order Service (Java - Spring Boot 3)
+
+Dịch vụ xử lý Đơn hàng — Nhân vật chính kích hoạt chuỗi giao dịch phân tán (Saga Choreography) trong kiến trúc Nexus Microservices.
+
+---
+
+## 📂 Cấu trúc mã nguồn
+
+```text
+order-service/
+├── src/main/java/com/nexus/orderservice/
+│   ├── config/
+│   │   └── KafkaTopicConfig.java       # Tự động tạo Topic "saga-orders-topic" trên Kafka Broker.
+│   ├── controller/
+│   │   └── OrderController.java        # REST API: POST /api/v1/orders (Tạo đơn hàng).
+│   ├── consumer/
+│   │   └── InventoryResponseConsumer.java  # Lắng nghe phản hồi Saga từ Inventory Service.
+│   ├── dto/
+│   │   └── OrderEvent.java             # DTO (Java Record) chứa payload truyền qua Kafka.
+│   └── service/
+│       └── OrderProducerService.java   # Kafka Producer bắn event ORDER_CREATED lên Topic.
+└── src/main/resources/
+    └── application.yml                 # Chỉ chứa tên app + trỏ tới Config Server (port 8888).
+```
+
+---
+
+## 🚀 Cách chạy
+
+```bash
+# Đảm bảo Config Server (8888), Eureka (8761), Kafka (9092), PostgreSQL (5432) đang chạy.
+cd services/order-service
+mvn spring-boot:run
+```
+
+---
+
+## 📖 Tài liệu chi tiết
+
+👉 Xem thêm tại **[services/docs/](../docs/)**
