@@ -69,20 +69,20 @@ services:
   # ==========================================
   # Mục đích: Pub/Sub luồng sự kiện lớn, nền tảng cho Saga Pattern (Choreography) phân tán Transaction.
   kafka:
-    image: bitnami/kafka:3.5 # Dùng image của Bitnami vì họ đóng gói config rất chuẩn và dễ dùng.
+    image: apache/kafka:3.7.0 # Sử dụng image chuẩn của apache để thay thế cho bitnami.
     container_name: nexus-kafka
     ports:
-      - "9092:9092" # Port chuẩn để code Java/NodeJS đẩy dữ liệu vào Topic.
+      - "9092:9092"
     environment:
-      # --- Cấu hình KRaft (Bỏ qua Zookeeper giúp giảm ngốn RAM) ---
-      KAFKA_CFG_NODE_ID: 1 # Định danh cho node Kafka hiện tại.
-      KAFKA_CFG_PROCESS_ROLES: broker,controller # Node này vừa lưu trữ message (broker) vừa quản lý cluster (controller).
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093 # Khai báo thông tin controller node.
-      # --- Cấu hình Mạng (Networking) ---
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093 # Port nội bộ container lắng nghe.
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092 # Địa chỉ public ra ngoài để ứng dụng biết đường kết nối.
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      ALLOW_PLAINTEXT_LISTENER: yes # Cho phép chạy không cần chứng chỉ bảo mật SSL (Vì đang code local).
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
     volumes:
       - kafka_data:/bitnami/kafka # Lưu trữ log cấu trúc (partition/offset) của Kafka.
     restart: unless-stopped
