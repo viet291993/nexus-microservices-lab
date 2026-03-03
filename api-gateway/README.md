@@ -22,41 +22,12 @@
 
 ---
 
-## 🧠 Implementation Notes (Key Learnings)
-
-### 1. Tại sao dùng WebFlux thay vì WebMVC?
-Gateway chịu trách nhiệm chặn và chuyển tiếp hàng ngàn requests mỗi giây. Sử dụng **Spring WebFlux** với mô hình Non-blocking I/O (qua Netty Server) giúp hệ thống không phải giữ Thread chờ đợi trong quá trình gọi sang service khác, giúp tối đa hóa thông lượng (throughput) mà tiêu tốn cực ít RAM so với Tomcat truyền thống.
-
-### 2. Rate Limiting bằng Redis
-Sử dụng thuật toán Token Bucket được cấu hình qua `RedisRateLimiter` gốc của Spring Cloud. Khi có traffic spike, Gateway có thể tính toán Request/giây trên bộ nhớ đệm tốc độ cao của Redis, nếu vượt ngưỡng nó sẽ ném về `429 Too Many Requests` ngay tức thì để bảo vệ Database phía sau.
-
-### 3. Ngắt mạch (Circuit Breaker) với Resilience4j
-Bảo vệ hệ thống khỏi hiện tượng "Hiệu ứng Domino" (lỗi dây chuyền). Khi các Service phía sau (Backend) gặp sự cố (bị sập, hoặc kết nối chậm do quá tải DB), Resilience4j sẽ đếm tỷ lệ lỗi/timeout trong một Sliding Window (ví dụ: 10 requests). Nếu tỷ lệ lỗi vượt ngưỡng 50%, cầu dao sẽ chuyển sang **OPEN** (Ngắt mạch) và điều hướng request ngay lập tức tới bộ phận **FallbackController** để trả về trạng thái `503 Service Unavailable` kết hợp với thông báo JSON thân thiện, thay vì để request treo (Thread block) hoặc ném lỗi ngoại lệ HTTP 500.
-
----
-
-## 🚦 Status & Roadmap
-
-- [x] **Project Initialization:** Setup cấu trúc Spring Boot 3.5 với Java 17, tích hợp Netty Server & WebFlux.
-- [x] **Basic Routing & Properties:** Map cấu hình Yaml với pattern nhận diện Loadbalancer (`lb://`). 
-- [x] **Eureka Discovery Config:** Liên kết và lắng nghe địa chỉ từ Eureka Server (tại `localhost:8761`).
-- [x] **Global Auth Filter:** Xây dựng bean Custom Filter để bắt JWT Header.
-- [x] **Redis Rate Limiting:** Kích hoạt tính năng chặn Request Spam theo IP.
-- [x] **CORS Policy:** Cấu hình Global CORS cho toàn bộ các web app trỏ tới.
-- [x] **Circuit Breaker (Resilience4j):** Cấu hình bảo vệ ngắt mạch, Fallback graceful degradation khi backend vượt ngưỡng time-out (3s) hoặc sụp đổ.
-
----
-
 ## 🚀 How to Run
 
-### Yêu cầu hệ thống (Prerequisites)
-* Java 17+
-* Redis Server 
-* Eureka Server (Đang chạy, ví dụ HTTP `localhost:8761`)
+**Yêu cầu hệ thống:** Java 17+, Redis (cổng 6379), Eureka Server (cổng 8761).
 
-### Lệnh khởi chạy nhanh
 ```bash
-# Xóa thư mục cũ và đóng gói ứng dụng
+# Đóng gói ứng dụng (bỏ qua test)
 ./mvnw clean package -DskipTests
 
 # Khởi chạy API Gateway
@@ -65,8 +36,12 @@ Bảo vệ hệ thống khỏi hiện tượng "Hiệu ứng Domino" (lỗi dây
 
 ---
 
-## 🛠️ Troubleshooting & Known Issues
+## 📚 Documentation
 
-Trong quá trình phát triển (đặc biệt trên môi trường macOS ARM64), nếu bạn gặp các lỗi khởi chạy như `UnsatisfiedLinkError` về DNS Resolver, `Properties Renamed` warning, hay lỗi `Connection refused` đến máy chủ Eureka, vui lòng xem tài liệu gỡ lỗi chi tiết tại:
+Để giữ README gọn gàng, toàn bộ chi tiết kỹ thuật, giải thích kiến trúc và hướng dẫn testing được chia nhỏ trong thư mục [`docs/`](./docs/):
 
-👉 **[docs/troubleshooting.md](./docs/troubleshooting.md)**
+* **[🧠 Implementation Notes & Mẹo Kiến Trúc](./docs/implementation-notes.md)**: Chi tiết về lý do chọn WebFlux, cơ chế Redis Rate Limiting, và Resilience4j Circuit Breaker.
+* **[🧪 Testing Guide](./docs/testing.md)**: Hướng dẫn chạy test suite (7/7 Pass 100%) bao phủ Security, CORS, Fallback Controller.
+* **[🛡️ Authentication](./docs/authentication.md)**: Cấu trúc Global Filter bắt JWT từ Keycloak.
+* **[⚡ Circuit Breaker](./docs/circuit-breaker-resilience4j.md)**: Tham số cấu hình chống đứt gãy dây chuyền (Resilience4j).
+* **[🛠️ Troubleshooting & Known Issues](./docs/troubleshooting.md)**: Cách khắc phục các lỗi hóc búa (macOS ARM64 DNS, Eureka Connection).

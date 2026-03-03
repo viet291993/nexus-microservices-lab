@@ -87,3 +87,27 @@ Tuy nhiên, cấu hình mặc định (hoặc ta cố tình thiết lập) trỏ
         fetch-registry: false
     ```
 *   **Cách 2 (Khuyên dùng):** Phát triển và khởi chạy một Microservice thứ 2 là `eureka-server` trên cổng `8761`. Sau khi Server lên, API Gateway sẽ tự động dò trùng port và tự động đăng ký thành công.
+
+---
+
+## 4. Lỗi `403 Forbidden` khi Unit Test CORS bằng `WebTestClient`
+
+### 📌 Hiện tượng
+Khi chạy các file Unit Test (đặc biệt là `CorsConfigTest`), request giả lập HTTP `OPTIONS` hoặc `GET` mặc dù đã cấu hình Bean `CorsWebFilter` đầy đủ nhưng vẫn liên tục bị trả về mã `403 Forbidden` và fail toàn bộ Test Case:
+```text
+java.lang.AssertionError: Status expected:<200 OK> but was:<403 FORBIDDEN>
+```
+
+### 🔍 Giải thích chi tiết
+Lỗi này phát sinh từ **Spring WebFlux Security 6+**. Khi tích hợp Spring Security, module này mặc định tự động đánh chặn và xử lý mọi request.
+*   **Vấn đề 1:** Mặc dù bạn đã khai báo `@Bean CorsWebFilter`, lớp bảo mật của Spring Security hoàn toàn "không biết" về sự tồn tại của Bean này. Do đó, request preflight (`OPTIONS`) được coi là một request **chưa xác thực** và Security Filter Chain lập tức từ chối bằng `401` hoặc `403`.
+*   **Vấn đề 2:** Đối với môi trường Integration Test của `WebTestClient`, context path-matching của WebFlux có thể không map chuẩn xác chuỗi pattern `/**` với tên miền giả lập (như `http://localhost:3000`), dẫn đến request fallback về trạng thái Unauthenticated.
+
+### 🛠️ Cách giải quyết
+Đã khắc phục hoàn toàn thông qua chuỗi 3 giải pháp:
+1.  **Chuyển đổi Bean Configuration:** Trong `CorsConfig.java`, không trả về `CorsWebFilter` nữa mà trả về **`CorsConfigurationSource`**.
+2.  **Kích hoạt tích hợp rẽ nhánh:** Trong `SecurityConfig.java`, liên kết rõ ràng CORS Source với hệ thống Security bằng lệnh bổ sung:
+    ```java
+    http.cors(org.springframework.security.config.Customizer.withDefaults())
+    ```
+3.  **Khuyên dùng Plain Unit Test cho Logic (Tối ưu nhất):** Dẹp bỏ việc dùng WebTestClient để mock CORS. Thay vào đó, test trực tiếp đối tượng logic `CorsConfigurationSource` thuần túy bằng thư viện JUnit `MockServerWebExchange`. Điều này giúp bypass mọi tính toán ngầm của mạng webflux, giữ tỷ lệ phủ mã (coverage) 100% nhưng tăng tốc độ test lên gấp chục lần và miễn nhiễm với báo lỗi giả.
