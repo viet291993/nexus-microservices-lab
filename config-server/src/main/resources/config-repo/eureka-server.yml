@@ -1,19 +1,28 @@
 server:
-  port: 8761
+  port: 8761 # Cổng mặc định của Eureka Server. Bản thân Dashboard/Giao diện quản lý cũng chạy ở cổng này.
 
 eureka:
   instance:
     hostname: localhost
   client:
-    register-with-eureka: false # Server không cần tự đăng ký
-    fetch-registry: false # Không kéo log về
+    # Ở các dịch vụ khác thì thiết lập này là true, nhưng với Eureka thì nó phải là false.
+    # Lý do: Bản thân đây là Server trung tâm nhận đăng ký (sổ danh bạ), nó không cần thiết tự đem tên mình ghi vào sổ của chính nó nữa.
+    register-with-eureka: false
+
+    # Ở các dịch vụ khác thì thiết lập này là true, để tải danh bạ về máy con.
+    # Nhưng Eureka Server không cần đi kéo dữ liệu đăng ký từ ai khác về, vì dữ liệu đang lưu trong lòng nó.
+    fetch-registry: false
     service-url:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   server:
+    # Tắt tính năng tự bảo vệ (Self-preservation mode). Khi bật, Eureka tự động ngưng xoá các dịch vụ rớt khỏi danh sách nếu mất kết nối diện rộng.
+    # Nhưng trong môi trường Dev/Local, nếu ta chủ động tắt 1 ứng dụng (ví dụ tắt Gateway), nó lập tức hiển thị cảnh báo lỗi đỏ lây lan rất khó chịu. Do đó ta tắt nốt nó đi.
     enable-self-preservation: false
 
 management:
   endpoints:
     web:
       exposure:
+        # Mở endpoint /actuator/refresh. Nếu chúng ta chỉnh sửa file eureka-server.yml này trên repo,
+        # ta chỉ cần gọi POST /actuator/refresh ở port 8761 thì Eureka tự xin lại file mới từ máy chủ 8888 (Config Server) mà không cần tắt/mở nóng.
         include: health,info,refresh
