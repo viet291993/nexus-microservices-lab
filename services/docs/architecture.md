@@ -21,20 +21,21 @@ Tài liệu này mô tả chi tiết kiến trúc chuyên sâu của hệ sinh t
 
 ## 🛠️ Quy trình Development Phase 2 (Saga Pattern & CQRS)
 
-### Bước 1: Khởi tạo Base (Scaffold)
+### ✅ Bước 1: Khởi tạo Base (Scaffold) — HOÀN THÀNH
 - Thiết lập khung Spring Boot cho `order-service` (JPA, Kafka, Eureka Client, Config Client).
 - Thiết lập khung NestJS cho `inventory-service` (Mongoose, Kafkajs).
 
-### Bước 2: Cấu hình Connectivity (Database & Config Server)
-- Kết nối `order-service` vào PostgreSQL.
-- Kết nối `inventory-service` vào MongoDB.
-- Móc nối tập trung vào Spring Cloud Config Server (port 8888) hoặc tệp `.env` môi trường cục bộ để lấy dữ liệu kết nối.
+### ✅ Bước 2: Cấu hình Connectivity (Database & Config Server) — HOÀN THÀNH
+- Kết nối `order-service` vào PostgreSQL qua file `config-repo/order-service.yml`.
+- Kết nối `inventory-service` vào MongoDB qua file `.env`.
+- Docker Compose đã chạy thành công toàn bộ hạ tầng (Kafka, Postgres, Mongo, Redis...).
 
-### Bước 3: Build lõi Message Driven (Broker Kafka)
-- Cấu hình Topic giao dịch trên máy chủ Kafka (vd: `saga-orders-topic`).
-- Viết các Kafka Producer (Gửi) và Consumer (Nhận) cơ bản ở cả 2 service.
-- Chạy thủ công (Health-check) để đảm bảo hai bên trao đổi Message chéo ngôn ngữ Java-NodeJS thành công.
+### ✅ Bước 3: Build lõi Message Driven (Broker Kafka) — HOÀN THÀNH
+- Tự động tạo Topic `saga-orders-topic` (3 partitions) trên Kafka Broker.
+- **Order Service (Java):** Kafka Producer gửi `OrderEvent` bất đồng bộ. 👉 [Chi tiết](./order-service-kafka.md)
+- **Inventory Service (NestJS):** Kafka Consumer nhận event, trừ kho MongoDB, gửi phản hồi. 👉 [Chi tiết](./inventory-service-kafka.md)
+- Luồng Saga hoàn chỉnh: `ORDER_CREATED` → trừ kho → `INVENTORY_CONFIRMED / FAILED` → rollback/confirm.
 
-### Bước 4: Viết Saga Choreography Logic & CQRS
+### 🔲 Bước 4: Viết Saga Choreography Logic & CQRS — ĐANG CHỜ
 - Mô phỏng Data dữ liệu Order giả định. Order gửi lệnh vào Database -> Quăng luồng Kafka -> Inventory check logic trừ hàng -> Thành công báo OK, Thất bại gọi ngược Rollback.
 - CQRS: Triển khai luồng đọc dữ liệu từ một cơ sở dữ liệu riêng (Elasticsearch/Redis).
