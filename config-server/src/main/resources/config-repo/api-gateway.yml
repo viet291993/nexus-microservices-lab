@@ -1,0 +1,119 @@
+server:
+  port: 8080 # Cổng chạy của ứng dụng API Gateway. Toàn bộ traffic/yêu cầu từ Front-end sẽ chỉ đi qua cổng này.
+
+spring:
+  main:
+    web-application-type: reactive # Khai báo bắt buộc chạy Gateway ở môi trường WebFlux (Non-blocking Netty) thay vì Tomcat (Spring MVC).
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Địa chỉ Public Keys của Keycloak (Realm mặc định). Gateway sẽ tải key giải mã từ đây mỗi lúc khởi động.
+          issuer-uri: http://localhost:8081/realms/master
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true # Tự động tạo route mapping dựa trên danh sách tên Service đăng ký có sẵn trên Eureka.
+              lower-case-service-id: true # Ép viết thường các service ID trên thanh địa chỉ thay vì phải ghi hoa (ví dụ `user-service`).
+          routes:
+            # ================= ROUTE 1: Khai báo User Service ================= #
+            - id: user-service # ID định danh tùy ý đặt cho Route này.
+              uri: lb://USER-SERVICE # Giao thức 'lb://' yêu cầu Gateway nhờ Spring LoadBalancer hỏi Eureka IP thật sự đang giữ tên "USER-SERVICE" (Có thể có tới 3 máy chủ chạy User Service phân vùng).
+              predicates:
+                - Path=/api/v1/users/** # Điều kiện nhảy: Bất kỳ URL nào từ Client gọi bắt đầu bằng `/api/v1/users/...` đều sẽ chui vào điều hướng này.
+              filters:
+                - name: RequestRateLimiter # Giới hạn lưu lượng chống DDOS/Spam.
+                  args:
+                    redis-rate-limiter.replenishRate: 10 # Số "vé" khôi phục mỗi giây. Nghĩa là trung bình người dùng làm được căng nhất 10 Request mỗi giây.
+                    redis-rate-limiter.burstCapacity: 20 # Sức chứa rổ vé tối đa. Nếu Spike thì có thể lên được 20 requests cùng thời điểm trước khi quăng lỗi HTTP 429 Too many Requests.
+                    key-resolver: "#{@clientIpKeyResolver}" # Tên Bean Java chịu trách nhiệm xác định "Thế nào là 1 nguồn request?" (Ở đây ta chọn xác định theo IP truy cập).
+                - name: CircuitBreaker
+                  args:
+                    name: userServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/userServiceFallback
+                - StripPrefix=1 # Bóc tách URL: Cắt bỏ cụm từ đầu tiên của đường dẫn (ở đây là '/api') trước khi chuyển nó vào backend bên trong.
+
+            # ================= ROUTE 2: Khai báo Product Service ================= #
+            - id: product-service
+              uri: lb://PRODUCT-SERVICE
+              predicates:
+                - Path=/api/v1/products/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@clientIpKeyResolver}"
+                - name: CircuitBreaker
+                  args:
+                    name: productServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/productServiceFallback
+                - StripPrefix=1
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: true # Thay vì báo danh bằng tên host hệ thống (hay bị lỗi không trỏ được trên Docker), bắt buộc Eureka nạp IP số thập phân cho an toàn.
+  client:
+    fetch-registry: true # Lệnh Gateway cứ đều đặn kéo danh bạ các URL Service từ Eureka Server về nhớ đệm (Để trỏ uri nhạy bén hơn).
+    register-with-eureka: true # Đưa chính bản thân Gateway lên Eureka báo danh như 1 node mạng công khai.
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ # Trỏ hướng mục tiêu trung tâm - là Eureka Server chạy ở cổng 8761.
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,refresh # Bổ sung endpoint /actuator/refresh để Gateway có thể tải lại cấu hình này từ Config Server khi file này thay đổi.
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+# ================================================================= #
+# ================= CẤU HÌNH CIRCUIT BREAKER (RESILIENCE4J) ======= #
+# ================================================================= #
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+        # Số lượng request tối thiểu trong 1 cửa sổ trượt (Sliding Window) để bắt đầu tính toán tỷ lệ lỗi.
+        # Ở đây Gateway sẽ theo dõi 10 request gần nhất.
+        slidingWindowSize: 10
+
+        # Ở nửa mở (HALF_OPEN - mạch đang thử nối lại), cho phép lọt bao nhiêu request thử nghiệm để xem service đã sống chưa?
+        permittedNumberOfCallsInHalfOpenState: 5
+
+        # Ngưỡng tỷ lệ phần trăm thất bại. Nếu lỗi (HTTP 5xx) hoặc rớt mạch vượt quá 50% trong 10 request trên, ngắt mạch ngay lập tức (Chuyển sang OPEN).
+        failureRateThreshold: 50
+
+        # Thời gian Gateway phải chờ ở trạng thái OPEN (Ngắt hoàn toàn) trước khi chuyển sang HALF_OPEN để dò la xem Backend đã tỉnh lại chưa.
+        waitDurationInOpenState: 10s
+
+        # Bật cấu hình ném các metric sức khỏe của ngắt mạch này lên Spring Boot Actuator (/actuator/health).
+        registerHealthIndicator: true
+
+      productServiceCircuitBreaker:
+        # Tương tự như của userService
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        registerHealthIndicator: true
+
+  timelimiter:
+    instances:
+      userServiceCircuitBreaker:
+        # Giới hạn thời gian tối đa để đợi 1 request trả về từ Backend. Nếu Backend user-service xử lý lâu hơn 3 giây => Tính là 1 lỗi Timeout (Đóng góp vào tỷ lệ lỗi 50% ở trên).
+        timeoutDuration: 3s
+      productServiceCircuitBreaker:
+        timeoutDuration: 3s

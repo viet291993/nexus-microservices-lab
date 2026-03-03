@@ -1,23 +1,7 @@
-server:
-  port: 8761
-
 spring:
   application:
+    # Tên của ứng dụng này khi gửi yêu cầu tới Config Server để xin file cấu hình tương ứng (Tên file phải giống tên này, vd: eureka-server.yml)
     name: eureka-server
-
-eureka:
-  instance:
-    hostname: localhost
-  client:
-    register-with-eureka: false # Bản thân đây là server nên không cần tự register
-    fetch-registry: false       # Không cần lấy metadata về
-    service-url:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
-  server:
-    enable-self-preservation: false # Tắt cảnh báo đỏ trên web (Self-preservation mode) dùng trong môi trường dev
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+  config:
+    # Lệnh bắt buộc Spring Boot khi khởi động phải tìm đến địa chỉ Config Server để kéo đống cấu hình thật sự về. Prefix 'optional:' giúp ứng dụng không văng lỗi sập ngay nguồn nếu Server Config đang ngủ quên.
+    import: "optional:configserver:http://localhost:8888/"
