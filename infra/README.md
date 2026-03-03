@@ -24,18 +24,20 @@ Mọi thiết lập ở đây phụ thuộc vào file `docker-compose.yml`, cho 
 Vui lòng chắc chắn rằng bạn đã mở **Docker Desktop** (hoặc tiến trình Docker Daemon) trên máy chủ trước khi thực thi lệnh.
 
 ### 1. Khởi chạy toàn bộ hệ thống
-Gõ lệnh sau tại thiết bị chính:
+Gõ lệnh sau tại thư mục gốc của dự án (`nexus-microservices-lab`):
 ```bash
-docker-compose up -d
+docker-compose -f infra/docker-compose.yml up -d
 ```
+*(Nếu bạn đã `cd infra` vào trong thư mục này rồi thì chỉ cần gõ `docker-compose up -d`)*
+
 Docker sẽ lấy config, tải images nặng từ Internet (nếu chạy lần đầu), giải nén và kích hoạt dưới dạng container ẩn.
 
 ### 2. Khởi chạy từng phần (Chống nghẽn RAM/Mạng)
 Nếu bạn chỉ tham gia lập trình/test cho 1 Service nhất định (Gateway) và máy bạn bị thiếu RAM, bạn nên chạy riêng biệt tên dịch vụ bằng lệnh:
 
 ```bash
-# Ví dụ: Chỉ chạy Redis và Keycloak để kiểm thử Gateway (Tiết kiệm >2GB RAM)
-docker-compose up -d redis keycloak
+# Đứng tại thư mục gốc, chỉ chạy redis và keycloak
+docker-compose -f infra/docker-compose.yml up -d redis keycloak
 ```
 
 ### 3. Tắt và dọn dẹp (Teardown)
