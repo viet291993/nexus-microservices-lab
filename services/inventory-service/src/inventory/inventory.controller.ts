@@ -15,8 +15,8 @@
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { EventPattern, Payload, ClientKafka } from '@nestjs/microservices';
 import { InventoryService } from './inventory.service';
-import type OrderEventPayload from '../shared/events/models/OrderEventPayload';
-import type InventoryResponsePayload from '../shared/events/models/InventoryResponsePayload';
+import OrderEventPayload from '../shared/events/models/OrderEventPayload';
+import InventoryResponsePayload from '../shared/events/models/InventoryResponsePayload';
 import OrderEventType from '../shared/events/models/OrderEventType';
 import InventoryEventType from '../shared/events/models/InventoryEventType';
 
@@ -43,11 +43,7 @@ export class InventoryController {
     /**
      * Handler lắng nghe event từ topic "order-events-topic".
      *
-     * @EventPattern: Decorator đặc biệt của NestJS Microservices.
-     * Khác với @MessagePattern (request-reply), @EventPattern chỉ nhận event một chiều (fire-and-forget).
-     * Phù hợp với kiến trúc Saga Choreography: mỗi bên tự xử lý rồi tự phát sóng kết quả.
-     *
-     * @param orderEvent Dữ liệu OrderEvent từ Java Order Service (đã được deserialize từ JSON).
+     * @param orderEvent Dữ liệu OrderEvent từ Java Order Service
      */
     @EventPattern('order-events-topic')
     async handleOrderCreated(@Payload() orderEvent: OrderEventPayload): Promise<void> {
@@ -70,13 +66,13 @@ export class InventoryController {
         );
 
         // Đóng gói phản hồi gửi ngược lại Order Service qua topic "inventory-events-topic".
-        const responseEvent: InventoryResponsePayload = {
+        const responseEvent = new InventoryResponsePayload({
             orderId: orderEvent.orderId,
             productId: orderEvent.productId,
             quantity: orderEvent.quantity,
             eventType: result.success ? InventoryEventType.INVENTORY_CONFIRMED : InventoryEventType.INVENTORY_FAILED,
             message: result.message,
-        };
+        });
 
         // Bắn phản hồi vào Kafka topic "inventory-events-topic".
         this.kafkaClient.emit('inventory-events-topic', responseEvent);

@@ -106,11 +106,13 @@ components:
           minimum: 1
           example: 5
         status:
+          title: OrderStatus
           type: string
           description: Trạng thái của đơn hàng trong hệ thống (Dùng để update database)
           enum: [PENDING, CONFIRMED, CANCELLED, FAILED]
           example: "PENDING"
         eventType:
+          title: OrderEventType
           type: string
           description: Dấu hiệu nhận biết loại Event để Consumer chuyển hướng xử lý (Routing)
           enum: [ORDER_CREATED, INVENTORY_CONFIRMED, INVENTORY_FAILED]
@@ -139,6 +141,7 @@ components:
           minimum: 1
           example: 5
         eventType:
+          title: InventoryEventType
           type: string
           description: Loại event phản hồi (INVENTORY_CONFIRMED hoặc INVENTORY_FAILED)
           enum: [INVENTORY_CONFIRMED, INVENTORY_FAILED]

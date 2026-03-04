@@ -11,11 +11,17 @@
 
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
   // Bước 1: Tạo ứng dụng HTTP bình thường (Express engine).
   const app = await NestFactory.create(AppModule);
+
+  // Kích hoạt ValidationPipe toàn cục. 
+  // transform: true cực kỳ quan quan trọng để class-transformer có thể 
+  // chuyển Plain JSON từ Kafka sang Instance của Class (DTO) nhằm thực thi các decorator validation.
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   // Bước 2: Gắn thêm một "tai nghe" Kafka vào ứng dụng (Hybrid Microservice).
   // Từ giờ, mỗi khi có message xuất hiện trên Kafka Topic, NestJS sẽ tự động
