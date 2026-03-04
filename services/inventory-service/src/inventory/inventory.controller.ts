@@ -15,7 +15,10 @@
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { EventPattern, Payload, ClientKafka } from '@nestjs/microservices';
 import { InventoryService } from './inventory.service';
-import { OrderEventPayload, InventoryResponsePayload } from './schemas/events';
+import type OrderEventPayload from '../shared/events/models/OrderEventPayload';
+import type InventoryResponsePayload from '../shared/events/models/InventoryResponsePayload';
+import OrderEventType from '../shared/events/models/OrderEventType';
+import InventoryEventType from '../shared/events/models/InventoryEventType';
 
 @Controller()
 export class InventoryController {
@@ -55,7 +58,7 @@ export class InventoryController {
         );
 
         // Chỉ xử lý event loại ORDER_CREATED (bỏ qua các loại khác).
-        if (orderEvent.eventType !== 'ORDER_CREATED') {
+        if (orderEvent.eventType !== OrderEventType.ORDER_CREATED) {
             this.logger.warn(`⚠️ [CONSUMER] Bỏ qua event không phải ORDER_CREATED: ${orderEvent.eventType}`);
             return;
         }
@@ -71,7 +74,7 @@ export class InventoryController {
             orderId: orderEvent.orderId,
             productId: orderEvent.productId,
             quantity: orderEvent.quantity,
-            eventType: result.success ? 'INVENTORY_CONFIRMED' : 'INVENTORY_FAILED',
+            eventType: result.success ? InventoryEventType.INVENTORY_CONFIRMED : InventoryEventType.INVENTORY_FAILED,
             message: result.message,
         };
 

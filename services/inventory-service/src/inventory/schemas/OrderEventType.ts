@@ -1,0 +1,7 @@
+
+enum OrderEventType {
+  ORDER_CREATED = "ORDER_CREATED",
+  INVENTORY_CONFIRMED = "INVENTORY_CONFIRMED",
+  INVENTORY_FAILED = "INVENTORY_FAILED",
+}
+export default OrderEventType;
