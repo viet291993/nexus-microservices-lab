@@ -6,6 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import org.springframework.context.ApplicationEventPublisher;
+
+import com.nexus.orderservice.elasticsearch.events.OrderSyncEvent;
 import com.nexus.orderservice.entity.OrderEntity;
 import com.nexus.orderservice.events.consumer.IProcessInventoryResponseConsumerService;
 import com.nexus.orderservice.events.model.InventoryResponsePayload;
@@ -26,9 +29,11 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
     private static final Logger log = LoggerFactory.getLogger(InventoryResponseConsumer.class);
 
     private final OrderRepository orderRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public InventoryResponseConsumer(OrderRepository orderRepository) {
+    public InventoryResponseConsumer(OrderRepository orderRepository, ApplicationEventPublisher eventPublisher) {
         this.orderRepository = orderRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -60,15 +65,23 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
             orderRepository.save(order);
             log.info("✅ [SAGA CONFIRMED] Đơn hàng {} → CONFIRMED. Kho đã trừ.", orderId);
 
+            eventPublisher.publishEvent(
+                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(), "CONFIRMED"));
+
         } else if (InventoryResponsePayload.InventoryEventType.INVENTORY_FAILED == eventType) {
-            // Idempotent: nếu đơn hàng đã bị CANCELLED trước đó thì bỏ qua failure event lặp lại.
+            // Idempotent: nếu đơn hàng đã bị CANCELLED trước đó thì bỏ qua failure event
+            // lặp lại.
             if ("CANCELLED".equalsIgnoreCase(order.getStatus())) {
-                log.warn("♻️ [SAGA ROLLBACK] Bỏ qua Inventory FAILED lặp lại cho đơn hàng {} (đã CANCELLED trước đó).", orderId);
+                log.warn("♻️ [SAGA ROLLBACK] Bỏ qua Inventory FAILED lặp lại cho đơn hàng {} (đã CANCELLED trước đó).",
+                        orderId);
                 return;
             }
             order.setStatus("CANCELLED");
             orderRepository.save(order);
             log.warn("🚫 [SAGA ROLLBACK] Đơn hàng {} → CANCELLED. Lý do: {}", orderId, message);
+
+            eventPublisher.publishEvent(
+                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(), "CANCELLED"));
         }
     }
 }

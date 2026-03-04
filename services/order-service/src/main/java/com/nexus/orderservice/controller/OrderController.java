@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.context.ApplicationEventPublisher;
+
+import com.nexus.orderservice.elasticsearch.events.OrderSyncEvent;
 import com.nexus.orderservice.entity.OrderEntity;
 import com.nexus.orderservice.events.model.OrderEventPayload;
 import com.nexus.orderservice.repository.OrderRepository;
@@ -39,10 +42,13 @@ public class OrderController {
 
     private final OrderProducerService producerService;
     private final OrderRepository orderRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public OrderController(OrderProducerService producerService, OrderRepository orderRepository) {
+    public OrderController(OrderProducerService producerService, OrderRepository orderRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.producerService = producerService;
         this.orderRepository = orderRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -67,6 +73,9 @@ public class OrderController {
         OrderEntity order = new OrderEntity(orderId, productId, quantity, "PENDING");
         orderRepository.save(order);
         log.info("💾 [ORDER] Đã lưu đơn hàng {} vào PostgreSQL (status=PENDING)", orderId);
+
+        // Bắn sự kiện đồng bộ CQRS (Elasticsearch)
+        eventPublisher.publishEvent(new OrderSyncEvent(this, orderId, productId, quantity, "PENDING"));
 
         // Bước 3: Đóng gói và gửi event ORDER_CREATED lên Kafka.
         // Sử dụng OrderEventPayload (generated từ AsyncAPI) với builder pattern và

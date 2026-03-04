@@ -3,6 +3,7 @@ package com.nexus.orderservice.consumer;
 import com.nexus.orderservice.entity.OrderEntity;
 import com.nexus.orderservice.events.model.InventoryResponsePayload;
 import com.nexus.orderservice.repository.OrderRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +17,14 @@ import static org.mockito.Mockito.*;
 class InventoryResponseConsumerTest {
 
     private OrderRepository orderRepository;
+    private ApplicationEventPublisher eventPublisher;
     private InventoryResponseConsumer consumer;
 
     @BeforeEach
     void setUp() {
         orderRepository = mock(OrderRepository.class);
-        consumer = new InventoryResponseConsumer(orderRepository);
+        eventPublisher = mock(ApplicationEventPublisher.class);
+        consumer = new InventoryResponseConsumer(orderRepository, eventPublisher);
     }
 
     @Test
@@ -98,4 +101,3 @@ class InventoryResponseConsumerTest {
         verify(orderRepository, never()).save(any());
     }
 }
-

@@ -9,6 +9,7 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -32,6 +33,7 @@ public abstract class BaseSagaIntegrationTest {
     protected static PostgreSQLContainer<?> postgres;
     protected static KafkaContainer kafka;
     protected static MongoDBContainer mongodb;
+    protected static ElasticsearchContainer elasticsearch;
 
     static {
         try {
@@ -47,15 +49,21 @@ public abstract class BaseSagaIntegrationTest {
 
                 mongodb = new MongoDBContainer(DockerImageName.parse("mongo:6.0"));
 
+                elasticsearch = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:9.2.0")
+                        .withEnv("discovery.type", "single-node")
+                        .withEnv("xpack.security.enabled", "false")
+                        .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
+
                 postgres.start();
                 kafka.start();
                 mongodb.start();
+                elasticsearch.start();
                 log.info("🐳 [E2E] Testcontainers started successfully.");
             } else {
                 log.warn("⚠️ [E2E] Docker not available. Falling back to host infrastructure.");
             }
         } catch (Exception e) {
-            log.error("❌ [E2E] Failed to start Testcontainers: {}. Falling back to host.", e.getMessage());
+            log.error("❌ [E2E] Failed to start Testcontainers. Falling back to host.", e);
         }
     }
 
@@ -84,6 +92,13 @@ public abstract class BaseSagaIntegrationTest {
         } else {
             log.info("🔗 [E2E] Connecting to host MongoDB at localhost:27017");
             registry.add("spring.data.mongodb.uri", () -> "mongodb://localhost:27017/nexus_db");
+        }
+
+        if (elasticsearch != null && elasticsearch.isRunning()) {
+            registry.add("spring.elasticsearch.uris", () -> "http://" + elasticsearch.getHttpHostAddress());
+        } else {
+            log.info("🔗 [E2E] Connecting to host Elasticsearch at localhost:9200");
+            registry.add("spring.elasticsearch.uris", () -> "http://localhost:9200");
         }
 
         registry.add("spring.kafka.consumer.auto-offset-reset", () -> "earliest");

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.orderservice.entity.OrderEntity;
 import com.nexus.orderservice.events.model.InventoryResponsePayload;
 import com.nexus.orderservice.events.model.OrderEventPayload;
+import com.nexus.orderservice.elasticsearch.entity.OrderDocument;
+import com.nexus.orderservice.elasticsearch.repository.OrderSearchRepository;
 import com.nexus.orderservice.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -29,6 +31,9 @@ public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private OrderSearchRepository orderSearchRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -61,6 +66,12 @@ public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
             assertThat(order.getStatus()).isEqualTo("CONFIRMED");
         });
 
+        // 3. CQRS: Kiểm tra dữ liệu đã được đồng bộ sang Elasticsearch
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            OrderDocument doc = orderSearchRepository.findById(orderId).orElseThrow();
+            assertThat(doc.getStatus()).isEqualTo("CONFIRMED");
+        });
+
         log.info("✅ Saga hoàn tất thành công cho đơn hàng: {}", orderId);
     }
 
@@ -87,6 +98,12 @@ public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
             OrderEntity order = orderRepository.findById(orderId).orElseThrow();
             assertThat(order.getStatus()).isEqualTo("CANCELLED");
+        });
+
+        // 3. CQRS: Kiểm tra dữ liệu rollback cũng được đồng bộ
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            OrderDocument doc = orderSearchRepository.findById(orderId).orElseThrow();
+            assertThat(doc.getStatus()).isEqualTo("CANCELLED");
         });
 
         log.info("✅ Saga rollback thành công cho đơn hàng: {}", orderId);
