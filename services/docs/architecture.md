@@ -1,4 +1,4 @@
-# Nexus: Services Architecture (Phase 2)
+# Nexus: Services Architecture
 
 Tài liệu này mô tả chi tiết kiến trúc chuyên sâu của hệ sinh thái các dịch vụ kinh doanh (Business Services) và cách chúng giao tiếp phân tán trong dự án Nexus Microservices.
 
@@ -19,7 +19,7 @@ Tài liệu này mô tả chi tiết kiến trúc chuyên sâu của hệ sinh t
 
 ---
 
-## 🛠️ Quy trình Development Phase 2 (Saga Pattern & CQRS)
+## 🛠️ Quy trình Development (Saga Pattern & CQRS)
 
 ### ✅ Bước 1: Khởi tạo Base (Scaffold) — HOÀN THÀNH
 - Thiết lập khung Spring Boot cho `order-service` (JPA, Kafka, Eureka Client, Config Client).
