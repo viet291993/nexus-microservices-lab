@@ -15,15 +15,7 @@
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { EventPattern, Payload, ClientKafka } from '@nestjs/microservices';
 import { InventoryService } from './inventory.service';
-
-// Interface mô tả cấu trúc OrderEvent nhận từ Java (phải khớp với Java Record OrderEvent).
-interface OrderEvent {
-    orderId: string;
-    productId: string;
-    quantity: number;
-    status: string;
-    eventType: string;
-}
+import { OrderEventPayload, InventoryResponsePayload } from './schemas/events';
 
 @Controller()
 export class InventoryController {
@@ -55,7 +47,7 @@ export class InventoryController {
      * @param orderEvent Dữ liệu OrderEvent từ Java Order Service (đã được deserialize từ JSON).
      */
     @EventPattern('order-events-topic')
-    async handleOrderCreated(@Payload() orderEvent: OrderEvent): Promise<void> {
+    async handleOrderCreated(@Payload() orderEvent: OrderEventPayload): Promise<void> {
         this.logger.log(
             `📩 [CONSUMER] Nhận event từ Order Service: orderId=${orderEvent.orderId}, ` +
             `productId=${orderEvent.productId}, quantity=${orderEvent.quantity}, ` +
@@ -75,7 +67,7 @@ export class InventoryController {
         );
 
         // Đóng gói phản hồi gửi ngược lại Order Service qua topic "inventory-events-topic".
-        const responseEvent = {
+        const responseEvent: InventoryResponsePayload = {
             orderId: orderEvent.orderId,
             productId: orderEvent.productId,
             quantity: orderEvent.quantity,
