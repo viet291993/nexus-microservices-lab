@@ -1,67 +1,50 @@
 package com.nexus.orderservice.service;
 
-import com.nexus.orderservice.config.KafkaTopicConfig;
-import com.nexus.orderservice.dto.OrderEvent;
+import com.nexus.orderservice.events.model.OrderEventPayload;
+import com.nexus.orderservice.events.producer.DefaultServiceEventsProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Service chịu trách nhiệm "bắn" (Produce) các sự kiện đơn hàng vào Kafka Topic.
  *
  * Trong mô hình Saga Choreography:
- *   - Order Service KHÔNG gọi trực tiếp API của Inventory Service (không có HTTP call chéo).
- *   - Thay vào đó, nó "quăng" một bưu kiện (OrderEvent) vào kênh truyền thông Kafka.
- *   - Ai cần thì tự đến kênh đó mà "nhặt" bưu kiện lên xử lý (Inventory, Notification...).
- *   => Đây chính là kiến trúc Event-Driven, giúp các Service không phụ thuộc trực tiếp vào nhau.
+ *   - Order Service KHÔNG gọi trực tiếp API của Inventory Service.
+ *   - Nó dùng DefaultServiceEventsProducer (ZenWave sinh tự động từ AsyncAPI).
+ *   - Logic Pub/Sub bằng Spring Cloud Stream đã được cấu hình trong application.yml.
  */
 @Service
 public class OrderProducerService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderProducerService.class);
 
-    // KafkaTemplate là công cụ chính mà Spring cung cấp để gửi Message lên Kafka.
-    // <String, OrderEvent>: Key là String (orderId), Value là đối tượng OrderEvent (tự động chuyển sang JSON).
-    private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
+    // Dùng Interface Producer tự động sinh thay vì viết tay KafkaTemplate
+    private final DefaultServiceEventsProducer serviceEventsProducer;
 
-    public OrderProducerService(KafkaTemplate<String, OrderEvent> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
+    public OrderProducerService(DefaultServiceEventsProducer serviceEventsProducer) {
+        this.serviceEventsProducer = serviceEventsProducer;
     }
 
     /**
-     * Gửi một sự kiện đơn hàng lên Kafka Topic "saga-orders-topic".
+     * Gửi một sự kiện đơn hàng lên Kafka Topic "order-events-topic".
      *
-     * Giải thích tham số send():
-     *   - Tham số 1 (Topic Name): Tên kênh Kafka mà message sẽ được ném vào.
-     *   - Tham số 2 (Key): Mã đơn hàng. Kafka dùng Key để phân phối message vào đúng Partition.
-     *     Các message cùng Key sẽ luôn vào cùng 1 Partition => đảm bảo thứ tự xử lý cho cùng 1 đơn hàng.
-     *   - Tham số 3 (Value): Nội dung bưu kiện (OrderEvent) sẽ được tự động serialize sang JSON.
-     *
-     * @param event Đối tượng OrderEvent chứa thông tin đơn hàng cần gửi.
+     * @param event Đối tượng OrderEventPayload (generated từ AsyncAPI)
      */
-    public void sendOrderEvent(OrderEvent event) {
-        log.info("📦 [PRODUCER] Đang gửi OrderEvent lên Kafka Topic '{}': {}", KafkaTopicConfig.SAGA_ORDERS_TOPIC, event);
+    public void sendOrderEvent(OrderEventPayload event) {
+        log.info("📦 [PRODUCER] Đang gửi OrderEventPayload lên Kafka qua ZenWave Generated Producer: {}", event);
 
-        // Gửi bất đồng bộ (Async). CompletableFuture cho phép ta xử lý kết quả mà không block luồng chính.
-        CompletableFuture<SendResult<String, OrderEvent>> future =
-                kafkaTemplate.send(KafkaTopicConfig.SAGA_ORDERS_TOPIC, event.orderId(), event);
+        // ZenWave tạo hàm sendOrderEvents hỗ trợ thêm headers (như messageKey).
+        // Phải đưa orderId vào Headers để Kafka định tuyến đúng Partition.
+        var headers = new DefaultServiceEventsProducer.OrderEventPayloadHeaders();
+        headers.put("kafka_messageKey", event.getOrderId().getBytes());
 
-        // Callback: Xử lý khi gửi thành công hoặc thất bại.
-        future.whenComplete((result, ex) -> {
-            if (ex == null) {
-                // Gửi thành công: Log ra thông tin partition và offset nơi message được lưu trữ.
-                log.info("✅ [PRODUCER] Gửi thành công! Topic={}, Partition={}, Offset={}",
-                        result.getRecordMetadata().topic(),
-                        result.getRecordMetadata().partition(),
-                        result.getRecordMetadata().offset());
-            } else {
-                // Gửi thất bại: Log lỗi để debug.
-                log.error("❌ [PRODUCER] Gửi thất bại cho OrderEvent: {}", event, ex);
-            }
-        });
+        boolean success = serviceEventsProducer.sendOrderEvents(event, headers);
+
+        if (success) {
+            log.info("✅ [PRODUCER] Gửi thành công event {} thông qua Spring Cloud Stream!", event.getOrderId());
+        } else {
+            log.error("❌ [PRODUCER] Gửi thất bại cho OrderEventPayload: {}", event.getOrderId());
+        }
     }
 }

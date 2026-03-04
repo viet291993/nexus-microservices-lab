@@ -31,7 +31,7 @@ Tài liệu này mô tả chi tiết kiến trúc chuyên sâu của hệ sinh t
 - Docker Compose đã chạy thành công toàn bộ hạ tầng (Kafka, Postgres, Mongo, Redis...).
 
 ### ✅ Bước 3: Build lõi Message Driven (Broker Kafka) — HOÀN THÀNH
-- Tự động tạo Topic `saga-orders-topic` (3 partitions) trên Kafka Broker.
+- Tự động tạo Topic `order-events-topic` (3 partitions) trên Kafka Broker.
 - **Order Service (Java):** Kafka Producer gửi `OrderEvent` bất đồng bộ. 👉 [Chi tiết](./order-service-kafka.md)
 - **Inventory Service (NestJS):** Kafka Consumer nhận event, trừ kho MongoDB, gửi phản hồi. 👉 [Chi tiết](./inventory-service-kafka.md)
 - Luồng Saga hoàn chỉnh: `ORDER_CREATED` → trừ kho → `INVENTORY_CONFIRMED / FAILED` → rollback/confirm.

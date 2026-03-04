@@ -6,7 +6,7 @@
  *
  * Hybrid giúp Inventory Service đồng thời:
  *   - Nhận request REST API thông thường (ví dụ: GET /inventory/health).
- *   - Lắng nghe Message từ Kafka Topic "saga-orders-topic" (từ Order Service Java).
+ *   - Lắng nghe Message từ Kafka Topic "order-events-topic" (từ Order Service Java).
  */
 
 import { NestFactory } from '@nestjs/core';
@@ -40,7 +40,7 @@ async function bootstrap(): Promise<void> {
   const port = process.env.PORT || 8082;
   await app.listen(port);
   console.log(`🚀 [INVENTORY] Inventory Service đang chạy tại http://localhost:${port}`);
-  console.log(`📡 [INVENTORY] Kafka Consumer đã sẵn sàng lắng nghe topic "saga-orders-topic"`);
+  console.log(`📡 [INVENTORY] Kafka Consumer đã sẵn sàng lắng nghe topic "order-events-topic"`);
 }
 
 bootstrap();

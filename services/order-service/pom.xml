@@ -30,6 +30,7 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2025.1.1</spring-cloud.version>
+		<zenwave.version>2.3.0</zenwave.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -43,6 +44,14 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-kafka</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-stream-binder-kafka</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -101,7 +110,140 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<!-- ========================================================= -->
+			<!-- ZenWave SDK: AsyncAPI Code Generation (Source of Truth)    -->
+			<!-- Tự động sinh Java POJO và Producer/Consumer interfaces     -->
+			<!-- từ file asyncapi.yaml (Shared Event Schema)               -->
+			<!-- ========================================================= -->
+			<plugin>
+				<groupId>io.zenwave360.sdk</groupId>
+				<artifactId>zenwave-sdk-maven-plugin</artifactId>
+				<version>${zenwave.version}</version>
+				<configuration>
+					<addCompileSourceRoot>true</addCompileSourceRoot>
+					<addTestCompileSourceRoot>true</addTestCompileSourceRoot>
+				</configuration>
+				<executions>
+					<!-- ================================================= -->
+					<!-- Execution 1: Sinh Java POJO (DTO) từ AsyncAPI      -->
+					<!-- Sử dụng jsonschema2pojo để convert JSON Schema      -->
+					<!-- thành các Java Class có đầy đủ getter/setter/equals -->
+					<!-- ================================================= -->
+					<execution>
+						<id>generate-asyncapi-dtos</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<generatorName>jsonschema2pojo</generatorName>
+							<inputSpec>${pom.basedir}/../../shared/event-schemas/asyncapi.yaml</inputSpec>
+							<configOptions>
+								<modelPackage>com.nexus.orderservice.events.model</modelPackage>
+								<!-- Sinh thêm @JsonTypeInfo để hỗ trợ Polymorphism khi deserialize -->
+								<jsonschema2pojo.includeTypeInfo>true</jsonschema2pojo.includeTypeInfo>
+								<!-- Sinh toString(), hashCode(), equals() -->
+								<jsonschema2pojo.includeToString>true</jsonschema2pojo.includeToString>
+								<jsonschema2pojo.includeHashcodeAndEquals>true</jsonschema2pojo.includeHashcodeAndEquals>
+								<!-- Dùng Java record-style (nếu Java 17+) -->
+								<jsonschema2pojo.generateBuilders>true</jsonschema2pojo.generateBuilders>
+							</configOptions>
+						</configuration>
+					</execution>
+
+					<!-- ================================================= -->
+					<!-- Execution 2: Sinh Producer/Consumer Interfaces     -->
+					<!-- Tạo typed interface cho Spring Cloud Streams        -->
+					<!-- Order Service = provider (publish order-events,     -->
+					<!--                          subscribe inventory-events)-->
+					<!-- ================================================= -->
+					<execution>
+						<id>generate-asyncapi-producer</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<generatorName>spring-cloud-streams3</generatorName>
+							<inputSpec>${pom.basedir}/../../shared/event-schemas/asyncapi.yaml</inputSpec>
+							<configOptions>
+								<role>provider</role>
+								<transactionalOutbox>none</transactionalOutbox>
+								<modelPackage>com.nexus.orderservice.events.model</modelPackage>
+								<producerApiPackage>com.nexus.orderservice.events.producer</producerApiPackage>
+								<consumerApiPackage>com.nexus.orderservice.events.consumer</consumerApiPackage>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
+
+				<!-- ZenWave SDK Generator Dependencies -->
+				<dependencies>
+					<dependency>
+						<groupId>io.zenwave360.sdk.plugins</groupId>
+						<artifactId>asyncapi-jsonschema2pojo</artifactId>
+						<version>${zenwave.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>io.zenwave360.sdk.plugins</groupId>
+						<artifactId>asyncapi-spring-cloud-streams3</artifactId>
+						<version>${zenwave.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+				<!-- Báo cho IDE (VS Code/Eclipse) biết về thư mục code sinh tự động -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.5.0</version>
+				<executions>
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}/generated-sources/zenwave/src/main/java</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>io.zenwave360.sdk</groupId>
+										<artifactId>zenwave-sdk-maven-plugin</artifactId>
+										<versionRange>[1.0,)</versionRange>
+										<goals>
+											<goal>generate</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute>
+											<runOnIncremental>false</runOnIncremental>
+										</execute>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 
 </project>

@@ -1,29 +1,25 @@
 package com.nexus.orderservice.consumer;
 
 import com.nexus.orderservice.entity.OrderEntity;
+import com.nexus.orderservice.events.consumer.IProcessInventoryResponseConsumerService;
+import com.nexus.orderservice.events.model.InventoryResponsePayload;
 import com.nexus.orderservice.repository.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.Optional;
 
 /**
  * Kafka Consumer lắng nghe phản hồi từ Inventory Service.
  *
- * Đây là nửa SAU của vòng lặp Saga Choreography:
- *   - Inventory đã xử lý xong (trừ kho OK hoặc thất bại).
- *   - Inventory gửi kết quả vào topic "saga-inventory-response".
- *   - Consumer này nhận kết quả đó và CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG trong PostgreSQL.
- *
- * Kết quả có thể là:
- *   - "INVENTORY_CONFIRMED" → Đơn hàng chuyển từ PENDING sang CONFIRMED.
- *   - "INVENTORY_FAILED"    → Đơn hàng chuyển từ PENDING sang CANCELLED (Saga Rollback).
+ * Lưu ý: Class này THỰC THI (implements) interface do ZenWave sinh tự động:
+ * IProcessInventoryResponseConsumerService.
+ * Nó KHÔNG cần @KafkaListener vì việc lấy message từ Topic (Routing/Deserialize)
+ * do Spring Cloud Stream và ZenWave lo liệu đằng sau.
  */
-@Component
-public class InventoryResponseConsumer {
+@Service
+public class InventoryResponseConsumer implements IProcessInventoryResponseConsumerService {
 
     private static final Logger log = LoggerFactory.getLogger(InventoryResponseConsumer.class);
 
@@ -34,21 +30,16 @@ public class InventoryResponseConsumer {
     }
 
     /**
-     * Handler tự động được Spring Kafka gọi mỗi khi có message mới
-     * trên topic "saga-inventory-response".
-     *
-     * @param response Map chứa dữ liệu phản hồi từ Inventory (JSON đã được deserialize).
+     * Hàm này được ZenWave Generated Controller gọi mỗi khi có message mới.
+     * Cực kỳ mạnh vì nó là Interface chuẩn (Type-safe).
      */
-    @KafkaListener(
-            topics = "saga-inventory-response",
-            groupId = "order-service-group"
-    )
-    public void handleInventoryResponse(Map<String, Object> response) {
-        String eventType = (String) response.get("eventType");
-        String orderId = (String) response.get("orderId");
-        String message = (String) response.get("message");
+    @Override
+    public void processInventoryResponse(InventoryResponsePayload payload, InventoryResponsePayloadHeaders headers) {
+        InventoryResponsePayload.EventType eventType = payload.getEventType();
+        String orderId = payload.getOrderId();
+        String message = payload.getMessage();
 
-        log.info("📩 [CONSUMER] Nhận phản hồi từ Inventory: orderId={}, eventType={}, message={}",
+        log.info("📩 [CONSUMER via ZenWave] Nhận phản hồi từ Kho: orderId={}, eventType={}, message={}",
                 orderId, eventType, message);
 
         // Tìm đơn hàng trong PostgreSQL.
@@ -61,15 +52,13 @@ public class InventoryResponseConsumer {
 
         OrderEntity order = optionalOrder.get();
 
-        // Xử lý Saga: Cập nhật trạng thái đơn hàng dựa trên phản hồi của Inventory.
-        if ("INVENTORY_CONFIRMED".equals(eventType)) {
-            // Trừ kho thành công → Đơn hàng được XÁC NHẬN.
+        // Xử lý Saga
+        if (InventoryResponsePayload.EventType.INVENTORY_CONFIRMED == eventType) {
             order.setStatus("CONFIRMED");
             orderRepository.save(order);
-            log.info("✅ [SAGA CONFIRMED] Đơn hàng {} → CONFIRMED. Kho đã trừ thành công.", orderId);
+            log.info("✅ [SAGA CONFIRMED] Đơn hàng {} → CONFIRMED. Kho đã trừ.", orderId);
 
-        } else if ("INVENTORY_FAILED".equals(eventType)) {
-            // Trừ kho thất bại → ROLLBACK: Hủy đơn hàng (Compensating Transaction).
+        } else if (InventoryResponsePayload.EventType.INVENTORY_FAILED == eventType) {
             order.setStatus("CANCELLED");
             orderRepository.save(order);
             log.warn("🚫 [SAGA ROLLBACK] Đơn hàng {} → CANCELLED. Lý do: {}", orderId, message);

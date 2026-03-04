@@ -25,89 +25,64 @@ servers:
     description: Local Kafka broker running via Docker Compose
 
 channels:
-  saga-orders-topic:
+  order-events-topic:
     description: Topic dành cho các sự kiện xuất phát từ luồng Đơn hàng (Order)
-    subscribe:
-      summary: Inventory Service lắng nghe topic này để trừ kho.
-      operationId: processOrderEvents
-      message:
-        $ref: "#/components/messages/OrderCreatedSubscribe"
-
     publish:
       summary: Order Service gửi sự kiện tạo đơn hàng vào topic này.
       operationId: sendOrderEvents
       message:
-        $ref: "#/components/messages/OrderCreatedPublish"
-
-  saga-inventory-response:
-    description: Topic dành cho kết quả xử lý kho (Inventory Response)
+        $ref: "#/components/messages/OrderCreated"
     subscribe:
-      summary: Order Service lắng nghe topic này để cập nhật trạng thái đơn (Thành công/Thất bại).
-      operationId: processInventoryResponses
+      summary: Inventory Service lắng nghe topic này để trừ kho.
+      operationId: processOrderEvents
       message:
-        oneOf:
-          - $ref: "#/components/messages/InventoryConfirmedSubscribe"
-          - $ref: "#/components/messages/InventoryFailedSubscribe"
+        $ref: "#/components/messages/OrderCreated"
 
+  inventory-events-topic:
+    description: Topic dành cho các sự kiện từ Inventory Service (Kết quả xử lý kho)
     publish:
       summary: Inventory Service trả kết quả về topic này sau khi xử lý trừ kho.
-      operationId: sendInventoryResponses
+      operationId: sendInventoryResponse
       message:
-        oneOf:
-          - $ref: "#/components/messages/InventoryConfirmedPublish"
-          - $ref: "#/components/messages/InventoryFailedPublish"
+        $ref: "#/components/messages/InventoryResponse"
+    subscribe:
+      summary: Order Service lắng nghe topic này để cập nhật trạng thái đơn (Thành công/Thất bại).
+      operationId: processInventoryResponse
+      message:
+        $ref: "#/components/messages/InventoryResponse"
 
 components:
   messages:
-    OrderCreatedPublish:
-      messageId: OrderCreatedPublishId
+    OrderCreated:
       name: OrderCreated
-      title: Sự kiện Khởi tạo Đơn hàng (Output)
+      title: Sự kiện Khởi tạo Đơn hàng
       summary: Được kích hoạt khi Order Service nhận một request đặt hàng hợp lệ. Trạng thái PENDING.
       payload:
         $ref: "#/components/schemas/OrderEventPayload"
+      bindings:
+        kafka:
+          key:
+            $ref: "#/components/schemas/OrderKeySchema"
 
-    OrderCreatedSubscribe:
-      messageId: OrderCreatedSubscribeId
-      name: OrderCreated
-      title: Sự kiện Khởi tạo Đơn hàng (Input)
-      summary: Inventory Service đọc sự kiện này để tiến hành trừ kho.
+    InventoryResponse:
+      name: InventoryResponse
+      title: Sự kiện Phản hồi từ Inventory Service
+      summary: >
+        Kết quả xử lý kho. Phân biệt loại event bằng field eventType:
+        INVENTORY_CONFIRMED (trừ kho thành công) hoặc INVENTORY_FAILED (thất bại).
       payload:
-        $ref: "#/components/schemas/OrderEventPayload"
-
-    InventoryConfirmedPublish:
-      messageId: InventoryConfirmedPublishId
-      name: InventoryConfirmed
-      title: Sự kiện Trừ kho Thành công (Output)
-      summary: Được Inventory Service gửi đi khi kho đủ số lượng. Trạng thái CONFIRMED.
-      payload:
-        $ref: "#/components/schemas/OrderEventPayload"
-
-    InventoryConfirmedSubscribe:
-      messageId: InventoryConfirmedSubscribeId
-      name: InventoryConfirmed
-      title: Sự kiện Trừ kho Thành công (Input)
-      summary: Order Service đọc sự kiện này để chốt đơn thành công.
-      payload:
-        $ref: "#/components/schemas/OrderEventPayload"
-
-    InventoryFailedPublish:
-      messageId: InventoryFailedPublishId
-      name: InventoryFailed
-      title: Sự kiện Trừ kho Thất bại (Output)
-      summary: Được Inventory Service gửi đi khi kho không đủ hoặc lỗi. Trạng thái CANCELLED/FAILED.
-      payload:
-        $ref: "#/components/schemas/OrderEventPayload"
-
-    InventoryFailedSubscribe:
-      messageId: InventoryFailedSubscribeId
-      name: InventoryFailed
-      title: Sự kiện Trừ kho Thất bại (Input)
-      summary: Order Service đọc sự kiện này để tiến hành Rollback.
-      payload:
-        $ref: "#/components/schemas/OrderEventPayload"
+        $ref: "#/components/schemas/InventoryResponsePayload"
+      bindings:
+        kafka:
+          key:
+            $ref: "#/components/schemas/OrderKeySchema"
 
   schemas:
+    OrderKeySchema:
+      type: string
+      description: "Sử dụng orderId (UUID) làm key để đảm bảo thứ tự xử lý trong cùng một Partition"
+      example: "123e4567-e89b-12d3-a456-426614174000"
+
     OrderEventPayload:
       type: object
       description: Cấu trúc dữ liệu chuẩn của Event (DTO) dùng chung cho cả Order và Inventory.
@@ -140,3 +115,35 @@ components:
           description: Dấu hiệu nhận biết loại Event để Consumer chuyển hướng xử lý (Routing)
           enum: [ORDER_CREATED, INVENTORY_CONFIRMED, INVENTORY_FAILED]
           example: "ORDER_CREATED"
+
+    InventoryResponsePayload:
+      type: object
+      description: Cấu trúc dữ liệu phản hồi từ Inventory Service (bao gồm thêm trường message mô tả kết quả).
+      required:
+        - orderId
+        - productId
+        - quantity
+        - eventType
+      properties:
+        orderId:
+          type: string
+          description: Mã định danh duy nhất của Đơn hàng (UUID)
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        productId:
+          type: string
+          description: Mã định danh của Sản phẩm
+          example: "PROD-001"
+        quantity:
+          type: integer
+          description: Số lượng sản phẩm đã xử lý
+          minimum: 1
+          example: 5
+        eventType:
+          type: string
+          description: Loại event phản hồi (INVENTORY_CONFIRMED hoặc INVENTORY_FAILED)
+          enum: [INVENTORY_CONFIRMED, INVENTORY_FAILED]
+          example: "INVENTORY_CONFIRMED"
+        message:
+          type: string
+          description: Thông điệp mô tả kết quả xử lý từ Inventory Service
+          example: "Đã trừ kho thành công"

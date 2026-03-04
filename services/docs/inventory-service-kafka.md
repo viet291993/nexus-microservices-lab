@@ -13,7 +13,7 @@ sequenceDiagram
     participant Service as InventoryService
     participant MongoDB as MongoDB
 
-    Kafka->>Controller: Consume "ORDER_CREATED" từ saga-orders-topic
+    Kafka->>Controller: Consume "ORDER_CREATED" từ order-events-topic
     Controller->>Controller: Kiểm tra eventType == ORDER_CREATED?
     Controller->>Service: deductStock(productId, quantity)
     Service->>MongoDB: findOne({ productId })
@@ -21,16 +21,16 @@ sequenceDiagram
     alt Không tìm thấy sản phẩm
         MongoDB-->>Service: null
         Service-->>Controller: { success: false, message: "Không tồn tại" }
-        Controller->>Kafka: Emit "INVENTORY_FAILED" → saga-inventory-response
+        Controller->>Kafka: Emit "INVENTORY_FAILED" → inventory-events-topic
     else Tồn kho < quantity (Hết hàng)
         MongoDB-->>Service: product (quantity không đủ)
         Service-->>Controller: { success: false, message: "Hết hàng" }
-        Controller->>Kafka: Emit "INVENTORY_FAILED" → saga-inventory-response
+        Controller->>Kafka: Emit "INVENTORY_FAILED" → inventory-events-topic
     else Đủ hàng
         MongoDB-->>Service: product (quantity đủ)
         Service->>MongoDB: product.quantity -= quantity → save()
         Service-->>Controller: { success: true, message: "Đã trừ kho" }
-        Controller->>Kafka: Emit "INVENTORY_CONFIRMED" → saga-inventory-response
+        Controller->>Kafka: Emit "INVENTORY_CONFIRMED" → inventory-events-topic
     end
 ```
 
@@ -60,8 +60,8 @@ NestJS hỗ trợ chạy đồng thời nhiều Transport. Trong `main.ts`:
 - Trả `{ success, message }` cho Controller quyết định gửi event phản hồi nào.
 
 ### `inventory.controller.ts`
-- **`@EventPattern('saga-orders-topic')`**: Decorator gắn handler vào Kafka topic.
-- Nhận `OrderEvent`, gọi `deductStock()`, đóng gói phản hồi, `emit()` vào `saga-inventory-response`.
+- **`@EventPattern('order-events-topic')`**: Decorator gắn handler vào Kafka topic.
+- Nhận `OrderEvent`, gọi `deductStock()`, đóng gói phản hồi, `emit()` vào `inventory-events-topic`.
 
 ### `inventory.module.ts`
 - Đăng ký `MongooseModule.forFeature` (Schema kho).

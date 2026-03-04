@@ -15,7 +15,7 @@ Vì không thể chia sẻ các lớp dữ liệu trực tiếp dưới dạng `
 ## 📄 File Thiết kế Chính: `asyncapi.yaml`
 
 Tệp `asyncapi.yaml` định nghĩa toàn bộ luồng Saga Choreography:
-- **Topics** Kafka mà hệ thống sử dụng (`saga-orders-topic`, `saga-inventory-response`).
+- **Topics** Kafka mà hệ thống sử dụng (`order-events-topic`, `inventory-events-topic`).
 - **Events** được truyền tải (`OrderCreated`, `InventoryConfirmed`, `InventoryFailed`).
 - **Cấu trúc dữ liệu** (Schema/DTO) của mỗi Event (yêu cầu các trường dữ liệu nào, kiểu dữ liệu là gì).
 

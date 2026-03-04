@@ -5,11 +5,11 @@
  * Controller này KHÔNG phục vụ HTTP request, mà lắng nghe Message từ Kafka Topic.
  *
  * Luồng xử lý:
- *   1. Order Service (Java) gửi event "ORDER_CREATED" vào topic "saga-orders-topic".
+ *   1. Order Service (Java) gửi event "ORDER_CREATED" vào topic "order-events-topic".
  *   2. Controller này nhận event đó qua decorator @EventPattern.
  *   3. Gọi InventoryService.deductStock() để trừ kho trong MongoDB.
  *   4. Gửi phản hồi (INVENTORY_CONFIRMED hoặc INVENTORY_FAILED) ngược lại
- *      vào topic "saga-inventory-response" để Order Service nhận và xử lý tiếp.
+ *      vào topic "inventory-events-topic" để Order Service nhận và xử lý tiếp.
  */
 
 import { Controller, Inject, Logger } from '@nestjs/common';
@@ -46,7 +46,7 @@ export class InventoryController {
     }
 
     /**
-     * Handler lắng nghe event từ topic "saga-orders-topic".
+     * Handler lắng nghe event từ topic "order-events-topic".
      *
      * @EventPattern: Decorator đặc biệt của NestJS Microservices.
      * Khác với @MessagePattern (request-reply), @EventPattern chỉ nhận event một chiều (fire-and-forget).
@@ -54,7 +54,7 @@ export class InventoryController {
      *
      * @param orderEvent Dữ liệu OrderEvent từ Java Order Service (đã được deserialize từ JSON).
      */
-    @EventPattern('saga-orders-topic')
+    @EventPattern('order-events-topic')
     async handleOrderCreated(@Payload() orderEvent: OrderEvent): Promise<void> {
         this.logger.log(
             `📩 [CONSUMER] Nhận event từ Order Service: orderId=${orderEvent.orderId}, ` +
@@ -74,7 +74,7 @@ export class InventoryController {
             orderEvent.quantity,
         );
 
-        // Đóng gói phản hồi gửi ngược lại Order Service qua topic "saga-inventory-response".
+        // Đóng gói phản hồi gửi ngược lại Order Service qua topic "inventory-events-topic".
         const responseEvent = {
             orderId: orderEvent.orderId,
             productId: orderEvent.productId,
@@ -83,8 +83,8 @@ export class InventoryController {
             message: result.message,
         };
 
-        // Bắn phản hồi vào Kafka topic "saga-inventory-response".
-        this.kafkaClient.emit('saga-inventory-response', responseEvent);
+        // Bắn phản hồi vào Kafka topic "inventory-events-topic".
+        this.kafkaClient.emit('inventory-events-topic', responseEvent);
 
         this.logger.log(
             `📤 [PRODUCER] Đã gửi phản hồi "${responseEvent.eventType}" cho orderId=${orderEvent.orderId}`,

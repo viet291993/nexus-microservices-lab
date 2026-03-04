@@ -13,17 +13,20 @@ import org.springframework.kafka.config.TopicBuilder;
 @Configuration
 public class KafkaTopicConfig {
 
-    // Tên của Topic nơi các sự kiện liên quan đến Đơn hàng (Saga) sẽ được thả vào.
-    public static final String SAGA_ORDERS_TOPIC = "saga-orders-topic";
+    // Tên của Topic nơi các sự kiện liên quan đến Đơn hàng (Order Domain) sẽ được đẩy vào.
+    public static final String ORDER_EVENTS_TOPIC = "order-events-topic";
+
+    // Tên của Topic nơi các sự kiện liên quan đến Kho (Inventory Domain) sẽ được đẩy vào.
+    public static final String INVENTORY_EVENTS_TOPIC = "inventory-events-topic";
 
     /**
-     * Bean này giúp Spring Boot tự động móc nối lên Kafka Broker và tạo sẵn Topic "saga-orders-topic"
+     * Bean này giúp Spring Boot tự động móc nối lên Kafka Broker và tạo sẵn Topic "order-events-topic"
      * nếu nó chưa tồn tại.
      */
     @Bean
-    public NewTopic sagaOrdersTopic() {
-        return TopicBuilder.name(SAGA_ORDERS_TOPIC)
-                // Phân mảnh (Partitions). Càng nhiều partition thì càng xử lý được nhiều luồng // (Concurrency) cùng lúc.
+    public NewTopic orderEventsTopic() {
+        return TopicBuilder.name(ORDER_EVENTS_TOPIC)
+                // Phân mảnh (Partitions). Càng nhiều partition thì càng xử lý được nhiều luồng (Concurrency) cùng lúc.
                 .partitions(3)
                 // Số bản sao dự phòng (Replicas). Vì chạy Local 1 node Kafka nên chỉ để 1.
                 .replicas(1)
