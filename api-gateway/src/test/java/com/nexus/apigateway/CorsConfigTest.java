@@ -11,7 +11,6 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("CORS Configuration Tests")
-@SuppressWarnings("null")
 class CorsConfigTest {
 
     @Test
