@@ -4,6 +4,8 @@
 
 ---
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/viet291993/nexus-microservices-lab?utm_source=oss&utm_medium=github&utm_campaign=viet291993%2Fnexus-microservices-lab&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 ## 🏗️ Architecture
 
 * **API Gateway:** Spring Cloud Gateway (Rate limiting, Dynamic Routing).
