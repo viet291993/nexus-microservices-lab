@@ -10,6 +10,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { EurekaModule } from './eureka/eureka.module';
+import { HealthModule } from './infra/health/health.module';
 import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
@@ -25,12 +27,21 @@ import { InventoryModule } from './inventory/inventory.module';
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        uri: config.get<string>('MONGODB_URI', 'mongodb://root:rootpassword@localhost:27017/nexus_inventory?authSource=admin'),
+        uri: config.get<string>(
+          'MONGODB_URI',
+          'mongodb://root:rootpassword@localhost:27017/nexus_inventory?authSource=admin',
+        ),
       }),
     }),
 
     // Module nghiệp vụ kho hàng (chứa Kafka Consumer, Schema, Service).
     InventoryModule,
+
+    // Module quản lý đăng ký Eureka cho Inventory Service.
+    EurekaModule,
+
+    // Module hạ tầng cung cấp endpoint /health cho toàn bộ service.
+    HealthModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

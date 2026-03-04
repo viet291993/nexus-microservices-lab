@@ -40,7 +40,7 @@ sequenceDiagram
 
 NestJS hỗ trợ chạy đồng thời nhiều Transport. Trong `main.ts`:
 
-1. **`NestFactory.create(AppModule)`**: Tạo ứng dụng HTTP Express bình thường (port 8082).
+1. **`NestFactory.create(AppModule)`**: Tạo ứng dụng HTTP Express bình thường (port 8083).
 2. **`app.connectMicroservice({ transport: Transport.KAFKA })`**: Gắn thêm "tai nghe" Kafka.
 3. **`app.startAllMicroservices()`**: Bật Kafka Consumer trước.
 4. **`app.listen(port)`**: Mở cổng HTTP sau.
@@ -49,32 +49,78 @@ NestJS hỗ trợ chạy đồng thời nhiều Transport. Trong `main.ts`:
 
 ---
 
-## ⚙️ Các file chính
+## ⚙️ Các file chính liên quan đến Saga & Kafka
 
 ### `inventory.schema.ts`
+
 - Mongoose Schema định nghĩa document MongoDB: `productId` (unique), `name`, `quantity`.
 - `timestamps: true` tự động gắn `createdAt`/`updatedAt`.
 
 ### `inventory.service.ts`
+
 - **`deductStock(productId, quantity)`**: Tìm sản phẩm → kiểm tra tồn kho → trừ kho → lưu MongoDB.
 - Trả `{ success, message }` cho Controller quyết định gửi event phản hồi nào.
 
 ### `inventory.controller.ts`
+
 - **`@EventPattern('order-events-topic')`**: Decorator gắn handler vào Kafka topic.
 - Nhận `OrderEvent`, gọi `deductStock()`, đóng gói phản hồi, `emit()` vào `inventory-events-topic`.
 
 ### `inventory.module.ts`
+
 - Đăng ký `MongooseModule.forFeature` (Schema kho).
 - Đăng ký `ClientsModule` (Kafka Producer) với token `'KAFKA_SERVICE'` để Controller inject.
 
 ---
 
+## 🌐 Tích hợp kỹ thuật với Eureka
+
+Mặc dù Inventory Service giao tiếp nghiệp vụ với Order Service qua Kafka, nó vẫn **đăng ký vào Eureka** để:
+
+- Cho các thành phần khác trong hệ sinh thái (Gateway, admin UI, monitoring) biết được trạng thái của service.
+- Tái sử dụng cơ chế health‑check / discovery giống với các service Java/Spring.
+
+### Luồng đăng ký từ phía NodeJS
+
+- `EurekaService` (`src/eureka/eureka.service.ts`):
+  - Được Nest khởi tạo khi `AppModule` boot.
+  - `onModuleInit()`:
+    - Đọc `PORT`, `EUREKA_HOST`, `EUREKA_PORT` từ `ConfigService` (tức `.env`).
+    - Khởi tạo `new Eureka({ instance, eureka })` với:
+      - `instance.app = 'INVENTORY-SERVICE'` (tên hiển thị trên Eureka UI).
+      - `instance.statusPageUrl` / `healthCheckUrl` trỏ tới `http://localhost:${PORT}/health`.
+      - `eureka.host`, `eureka.port`, `eureka.servicePath` = địa chỉ của Eureka Server.
+    - Gọi `client.start(callback)` để:
+      - Gửi REST request `POST /eureka/apps/INVENTORY-SERVICE` lên Eureka.
+      - Bắt đầu chu kỳ heartbeat định kỳ để giữ registration ở trạng thái `UP`.
+  - `onModuleDestroy()`:
+    - Gọi `client.stop(callback)` để:
+      - Gửi request deregister (`DELETE /eureka/apps/INVENTORY-SERVICE/...`).
+      - Dừng heartbeat, giải phóng tài nguyên client.
+
+### Liên kết giữa Eureka & health‑check
+
+- `HealthController` (`src/infra/health/health.controller.ts`):
+  - Định nghĩa `GET /health` trả `{ status: 'UP' }`.
+  - Được gom trong `HealthModule` và import vào `AppModule`.
+- `EurekaService` cấu hình:
+  - `statusPageUrl` và `healthCheckUrl` đều trỏ tới endpoint này.
+  - Khi mở `http://localhost:8761` (Eureka Dashboard):
+    - Bạn sẽ thấy app `INVENTORY-SERVICE`.
+    - Click vào instance sẽ thấy link status/health trỏ về Inventory Service (NestJS).
+
+---
+
 ## 🔑 Biến môi trường (.env)
 
-| Biến              | Mặc định                          | Mô tả                                  |
-| :---------------- | :-------------------------------- | :-------------------------------------- |
-| `PORT`            | `8082`                            | Cổng HTTP của Inventory Service.        |
-| `MONGODB_URI`     | `mongodb://root:rootpassword@...` | Connection string MongoDB.              |
-| `KAFKA_BROKERS`   | `localhost:9092`                  | Danh sách Kafka Broker (phân cách `,`). |
-| `KAFKA_CLIENT_ID` | `inventory-service-client`        | ID định danh Kafka Client.              |
-| `KAFKA_GROUP_ID`  | `inventory-service-group`         | Consumer Group ID.                      |
+> Gợi ý: sử dụng `.env.example` trong thư mục `services/inventory-service` làm mẫu, rồi copy thành `.env` và điền giá trị thật cho từng môi trường.
+
+| Biến              | Mặc định                          | Mô tả                                                     |
+| :---------------- | :-------------------------------- | :-------------------------------------------------------- |
+| `PORT`            | `8083`                            | Cổng HTTP của Inventory Service.                          |
+| `MONGODB_URI`     | `mongodb://root:rootpassword@...` | Connection string MongoDB (có thể override qua `.env`).   |
+| `KAFKA_BROKERS`   | `localhost:9092`                  | Danh sách Kafka Broker (phân cách `,`).                   |
+| `KAFKA_CLIENT_ID` | `inventory-service-client`        | ID định danh Kafka Client.                                |
+| `KAFKA_GROUP_ID`  | `inventory-service-group`         | Consumer Group ID.                                        |
+| `EUREKA_HOST`     | `localhost`                       | Host của Eureka Server dùng để Inventory Service đăng ký. |
+| `EUREKA_PORT`     | `8761`                            | Cổng của Eureka Server.                                   |
