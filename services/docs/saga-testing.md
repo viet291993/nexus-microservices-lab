@@ -33,6 +33,9 @@ Kế hoạch này tập trung vào **Unit Test + Integration Test cho Saga workf
 
 ## 4.2. Order Service — Event Publisher (Happy Path)
 
+- [x] 4.2.1 Order Creation Triggers Event Publication
+- [x] 4.2.2 Event Payload Serialization
+
 ### 4.2.1. Order Creation Triggers Event Publication
 
 - **Mục tiêu**: Khi tạo đơn thành công, Order Service phải persist vào DB và publish `OrderCreatedEvent` lên Kafka.
@@ -58,6 +61,11 @@ Kế hoạch này tập trung vào **Unit Test + Integration Test cho Saga workf
 ---
 
 ## 4.3. Inventory Service — Reservation Failure Scenarios (NestJS/Jest)
+
+- [x] 4.3.1 Insufficient Stock Triggers Failure Event (logic: `InventoryService.deductStock`)
+- [x] 4.3.2 Product Not Found (logic: `InventoryService.deductStock`)
+- [x] 4.3.3 Zero Quantity Request (logic: `InventoryService.deductStock`)
+- [x] 4.3.4 Concurrent Reservation (Race Condition — optional)
 
 ### 4.3.1. Insufficient Stock Triggers Failure Event
 
@@ -103,6 +111,9 @@ Kế hoạch này tập trung vào **Unit Test + Integration Test cho Saga workf
 ---
 
 ## 4.4. Order Compensation Handler — Rollback Logic (Java)
+
+- [x] 4.4.1 Order Fails on Insufficient Inventory (logic: `InventoryResponseConsumer` + `OrderEntity.status`)
+- [x] 4.4.2 Compensation Idempotency — Duplicate Failure Event
 
 ### 4.4.1. Order Fails on Insufficient Inventory
 

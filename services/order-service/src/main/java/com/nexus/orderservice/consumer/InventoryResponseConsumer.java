@@ -1,21 +1,23 @@
 package com.nexus.orderservice.consumer;
 
-import com.nexus.orderservice.entity.OrderEntity;
-import com.nexus.orderservice.events.consumer.IProcessInventoryResponseConsumerService;
-import com.nexus.orderservice.events.model.InventoryResponsePayload;
-import com.nexus.orderservice.repository.OrderRepository;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import com.nexus.orderservice.entity.OrderEntity;
+import com.nexus.orderservice.events.consumer.IProcessInventoryResponseConsumerService;
+import com.nexus.orderservice.events.model.InventoryResponsePayload;
+import com.nexus.orderservice.repository.OrderRepository;
 
 /**
  * Kafka Consumer lắng nghe phản hồi từ Inventory Service.
  *
  * Lưu ý: Class này THỰC THI (implements) interface do ZenWave sinh tự động:
  * IProcessInventoryResponseConsumerService.
- * Nó KHÔNG cần @KafkaListener vì việc lấy message từ Topic (Routing/Deserialize)
+ * Nó KHÔNG cần @KafkaListener vì việc lấy message từ Topic
+ * (Routing/Deserialize)
  * do Spring Cloud Stream và ZenWave lo liệu đằng sau.
  */
 @Service
@@ -59,6 +61,11 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
             log.info("✅ [SAGA CONFIRMED] Đơn hàng {} → CONFIRMED. Kho đã trừ.", orderId);
 
         } else if (InventoryResponsePayload.InventoryEventType.INVENTORY_FAILED == eventType) {
+            // Idempotent: nếu đơn hàng đã bị CANCELLED trước đó thì bỏ qua failure event lặp lại.
+            if ("CANCELLED".equalsIgnoreCase(order.getStatus())) {
+                log.warn("♻️ [SAGA ROLLBACK] Bỏ qua Inventory FAILED lặp lại cho đơn hàng {} (đã CANCELLED trước đó).", orderId);
+                return;
+            }
             order.setStatus("CANCELLED");
             orderRepository.save(order);
             log.warn("🚫 [SAGA ROLLBACK] Đơn hàng {} → CANCELLED. Lý do: {}", orderId, message);

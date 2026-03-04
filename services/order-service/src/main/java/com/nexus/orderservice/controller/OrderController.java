@@ -1,27 +1,35 @@
 package com.nexus.orderservice.controller;
 
-import com.nexus.orderservice.events.model.OrderEventPayload;
-import com.nexus.orderservice.entity.OrderEntity;
-import com.nexus.orderservice.repository.OrderRepository;
-import com.nexus.orderservice.service.OrderProducerService;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import com.nexus.orderservice.entity.OrderEntity;
+import com.nexus.orderservice.events.model.OrderEventPayload;
+import com.nexus.orderservice.repository.OrderRepository;
+import com.nexus.orderservice.service.OrderProducerService;
 
 /**
  * REST Controller xử lý các yêu cầu liên quan đến Đơn hàng.
  *
  * Luồng Saga Choreography hoàn chỉnh:
- *   1. Client gửi POST /api/v1/orders → Controller tạo đơn PENDING trong PostgreSQL.
- *   2. Controller đóng gói OrderEventPayload (generated từ AsyncAPI) → gửi vào Kafka topic "order-events-topic".
- *   3. Inventory Service (NestJS) nhận event, trừ kho MongoDB.
- *   4. Inventory gửi phản hồi (CONFIRMED/FAILED) → InventoryResponseConsumer cập nhật DB.
+ * 1. Client gửi POST /api/v1/orders → Controller tạo đơn PENDING trong
+ * PostgreSQL.
+ * 2. Controller đóng gói OrderEventPayload (generated từ AsyncAPI) → gửi vào
+ * Kafka topic "order-events-topic".
+ * 3. Inventory Service (NestJS) nhận event, trừ kho MongoDB.
+ * 4. Inventory gửi phản hồi (CONFIRMED/FAILED) → InventoryResponseConsumer cập
+ * nhật DB.
  */
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -42,8 +50,8 @@ public class OrderController {
      *
      * Request Body mẫu (JSON):
      * {
-     *   "productId": "PRODUCT-001",
-     *   "quantity": 5
+     * "productId": "PRODUCT-001",
+     * "quantity": 5
      * }
      */
     @PostMapping
@@ -61,7 +69,8 @@ public class OrderController {
         log.info("💾 [ORDER] Đã lưu đơn hàng {} vào PostgreSQL (status=PENDING)", orderId);
 
         // Bước 3: Đóng gói và gửi event ORDER_CREATED lên Kafka.
-        // Sử dụng OrderEventPayload (generated từ AsyncAPI) với builder pattern và type-safe enums.
+        // Sử dụng OrderEventPayload (generated từ AsyncAPI) với builder pattern và
+        // type-safe enums.
         OrderEventPayload event = new OrderEventPayload()
                 .withOrderId(orderId)
                 .withProductId(productId)
@@ -76,8 +85,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
                 "orderId", orderId,
                 "status", "PENDING",
-                "message", "Đơn hàng đã được tiếp nhận và đang chờ xử lý bởi hệ thống kho."
-        ));
+                "message", "Đơn hàng đã được tiếp nhận và đang chờ xử lý bởi hệ thống kho."));
     }
 
     /**
