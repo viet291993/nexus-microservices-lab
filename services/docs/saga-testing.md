@@ -143,9 +143,29 @@ Kế hoạch này tập trung vào **Unit Test + Integration Test cho Saga workf
 
 Các test E2E dưới đây sẽ được thực hiện khi hạ tầng Testcontainers hoàn chỉnh hơn (Kafka, PostgreSQL, MongoDB):
 
-- **4.6.1 — Happy Path**: Tạo order → PENDING → `ORDER_CREATED` → inventory confirm → `INVENTORY_CONFIRMED` → order CONFIRMED.
-- **4.6.2 — Insufficient Inventory**: `ORDER_CREATED` → `INVENTORY_FAILED` → order FAILED/CANCELLED.
-- **4.6.3 — Cancel Flow**: Sau khi order CONFIRMED, gửi cancel → roll back kho (sẽ cần thêm stock reservation).
-- **4.6.4 — Timeout / Service Down**: Inventory Service down → order ở PENDING hoặc timeout theo policy retry.
+- [x] **4.6.1 — Happy Path**: Tạo order → PENDING → `ORDER_CREATED` → inventory confirm → `INVENTORY_CONFIRMED` → order CONFIRMED.
+- [x] **4.6.2 — Insufficient Inventory**: `ORDER_CREATED` → `INVENTORY_FAILED` → order FAILED/CANCELLED.
+- [ ] **4.6.3 — Cancel Flow**: Sau khi order CONFIRMED, gửi cancel → roll back kho (sẽ cần thêm stock reservation).
+- [ ] **4.6.4 — Timeout / Service Down**: Inventory Service down → order ở PENDING hoặc timeout theo policy retry.
 
-> Ghi chú: kế hoạch hiện tại ưu tiên **unit/integration test ở mức service** (Tasks 4.2–4.4). E2E bằng Testcontainers sẽ được mở rộng khi luồng nghiệp vụ và hạ tầng ổn định hơn.
+> Ghi chú: Kế hoạch mức Service (Component E2E) bằng Testcontainers đã hoàn thiện cho Happy Path và Rollback. Các kịch bản Cancel Flow và Timeout sẽ được thực hiện sau tính năng App được implement đầy đủ.
+
+---
+
+## 4.6. True End-to-End Testing (Docker Compose + Jest) - [PENDING]
+
+Để test toàn trình luồng Saga đi qua cả Spring Boot (Order Service) và NestJS (Inventory Service), chúng ta sẽ sử dụng phương án Black-box Testing với Docker Compose.
+
+**Kế hoạch triển khai (Khi có yêu cầu):**
+
+1. **Khởi tạo thư mục `e2e-tests`**:
+   - Khởi tạo Node.js project (`package.json`) dùng **Jest** và **Axios** (Nằm ngoài thư mục `services`).
+2. **Cấu hình `docker-compose.e2e.yml`**:
+   - Dựng chung hạ tầng Kafka, Postgres, Mongo.
+   - Build và chạy cả Docker image của Order Service lẫn Inventory Service.
+   - Expose port của API Gateway hoặc Order Service cho Jest gọi tới.
+3. **Viết kịch bản test Polling**:
+   - *Happy Path*: POST API tạo đơn với `productId="P001"`. Dùng vòng lặp gọi GET API liên tục đến khi `status == CONFIRMED`.
+   - *Rollback Path*: POST API tạo đơn với `productId="OUT_OF_STOCK"`. Gọi GET liên tục đến khi `status == CANCELLED`.
+4. **Viết Bash Script chạy tự động**:
+   - `docker-compose up -d` -> Chờ healthcheck -> Chạy `npm run test` -> `docker-compose down`.
