@@ -25,16 +25,37 @@ order-service/
 
 ---
 
-## 🚀 Cách chạy
+## 🚀 Hướng dẫn khởi chạy
 
+### 1. Yêu cầu tiên quyết
+Đảm bảo các dịch vụ hạ tầng trong thư mục `/infra` đã được khởi động bằng Docker Compose:
+- **Config Server** (Cổng 8888)
+- **Eureka Server** (Cổng 8761)
+- **Kafka** (Cổng 9092)
+- **PostgreSQL** (Cổng 5432)
+
+### 2. Sinh mã nguồn tự động (ZenWave SDK)
+Dự án sử dụng **ZenWave SDK** để đảm bảo tính đồng bộ của Event Contract (Shared Schema). Bạn cần sinh mã nguồn trước khi biên dịch hoặc chạy:
 ```bash
-# Đảm bảo Config Server (8888), Eureka (8761), Kafka (9092), PostgreSQL (5432) đang chạy.
-cd services/order-service
-mvn spring-boot:run
+mvn clean generate-sources
+```
+
+### 3. Khởi chạy ứng dụng
+Sử dụng Profile `local` để ứng dụng nhận đúng cấu hình từ Config Server:
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+### 4. Kiểm thử API (Testing)
+Sau khi ứng dụng khởi động thành công (mặc định tại cổng `8082`), bạn có thể thử tạo một đơn hàng mới bằng `curl`:
+```bash
+curl -X POST http://localhost:8082/api/v1/orders \
+     -H "Content-Type: application/json" \
+     -d '{"productId": "PROD-001", "quantity": 5}'
 ```
 
 ---
 
 ## 📖 Tài liệu chi tiết
 
-👉 Xem thêm tại **[services/docs/](../docs/)**
+👉 Xem thêm các kiến thức về Saga tại **[services/docs/](../docs/)**

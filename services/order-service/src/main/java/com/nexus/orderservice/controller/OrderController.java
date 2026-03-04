@@ -66,8 +66,8 @@ public class OrderController {
                 .withOrderId(orderId)
                 .withProductId(productId)
                 .withQuantity(quantity)
-                .withStatus(OrderEventPayload.Status.PENDING)
-                .withEventType(OrderEventPayload.EventType.ORDER_CREATED);
+                .withStatus(OrderEventPayload.OrderStatus.PENDING)
+                .withEventType(OrderEventPayload.OrderEventType.ORDER_CREATED);
 
         producerService.sendOrderEvent(event);
         log.info("📤 [ORDER] Đã gửi event ORDER_CREATED vào Kafka, chờ Inventory xử lý...");

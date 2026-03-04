@@ -35,7 +35,7 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
      */
     @Override
     public void processInventoryResponse(InventoryResponsePayload payload, InventoryResponsePayloadHeaders headers) {
-        InventoryResponsePayload.EventType eventType = payload.getEventType();
+        InventoryResponsePayload.InventoryEventType eventType = payload.getEventType();
         String orderId = payload.getOrderId();
         String message = payload.getMessage();
 
@@ -53,12 +53,12 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
         OrderEntity order = optionalOrder.get();
 
         // Xử lý Saga
-        if (InventoryResponsePayload.EventType.INVENTORY_CONFIRMED == eventType) {
+        if (InventoryResponsePayload.InventoryEventType.INVENTORY_CONFIRMED == eventType) {
             order.setStatus("CONFIRMED");
             orderRepository.save(order);
             log.info("✅ [SAGA CONFIRMED] Đơn hàng {} → CONFIRMED. Kho đã trừ.", orderId);
 
-        } else if (InventoryResponsePayload.EventType.INVENTORY_FAILED == eventType) {
+        } else if (InventoryResponsePayload.InventoryEventType.INVENTORY_FAILED == eventType) {
             order.setStatus("CANCELLED");
             orderRepository.save(order);
             log.warn("🚫 [SAGA ROLLBACK] Đơn hàng {} → CANCELLED. Lý do: {}", orderId, message);

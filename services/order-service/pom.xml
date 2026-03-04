@@ -173,6 +173,7 @@
 								<modelPackage>com.nexus.orderservice.events.model</modelPackage>
 								<producerApiPackage>com.nexus.orderservice.events.producer</producerApiPackage>
 								<consumerApiPackage>com.nexus.orderservice.events.consumer</consumerApiPackage>
+								<operationIds>sendOrderEvents,processInventoryResponse</operationIds>
 							</configOptions>
 						</configuration>
 					</execution>
