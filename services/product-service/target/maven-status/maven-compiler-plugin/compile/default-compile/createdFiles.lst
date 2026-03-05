@@ -1,0 +1,5 @@
+com/nexus/productservice/controller/ProductController.class
+com/nexus/productservice/entity/Product.class
+com/nexus/productservice/repository/ProductRepository.class
+com/nexus/productservice/ProductServiceApplication.class
+com/nexus/productservice/service/ProductService.class

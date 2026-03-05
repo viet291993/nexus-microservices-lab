@@ -49,13 +49,6 @@
 			<artifactId>zipkin-reporter-brave</artifactId>
 		</dependency>
 
-		<!-- Common Infrastructure: Shared configuration and logic (already includes logstash) -->
-		<dependency>
-			<groupId>com.nexus</groupId>
-			<artifactId>nexus-common</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
 		<!-- Common Tools: Lombok (Compile only/Optional) -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -66,6 +59,20 @@
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- Shared Common Module Management -->
+			<dependency>
+				<groupId>com.nexus</groupId>
+				<artifactId>nexus-common</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<!-- Logstash encoder version management -->
+			<dependency>
+				<groupId>net.logstash.logback</groupId>
+				<artifactId>logstash-logback-encoder</artifactId>
+				<version>${logstash-encoder.version}</version>
+			</dependency>
+
 			<!-- Spring Cloud Dependencies -->
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
@@ -85,21 +92,29 @@
 	</dependencyManagement>
 
 	<build>
-		<plugins>
-			<!-- Common Maven Plugin for Spring Boot apps -->
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<configuration>
+						<excludes>
+							<exclude>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok</artifactId>
+							</exclude>
+						</excludes>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>repackage</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 
 </project>
