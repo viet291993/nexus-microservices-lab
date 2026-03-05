@@ -73,11 +73,11 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 - [x] **Rate Limiting:** Bảo vệ hệ thống từ phía Gateway.
 👉 **[Xem chi tiết hướng dẫn vận hành Phase 3 tại đây](./services/docs/phase-3-walkthrough.md)**
 
-### Phase 4: Observability — 20%
+### Phase 4: Observability — 80%
 
 - [x] **Centralized Logging (ELK):** Đẩy log tập trung về Kibana qua Logstash.
 - [x] **Distributed Tracing:** Tích hợp Zipkin/Tempo để theo dõi hành trình request (correlation_id).
-- [ ] **Metrics & Monitoring:** Thiết lập **Grafana Dashboard** mẫu (Prometheus) để quan sát CPU, RAM, Kafka Lag và throughput thực tế.
+- [x] **Metrics & Monitoring:** Thiết lập **Grafana Dashboard** mẫu (Prometheus) để quan sát CPU, RAM, Kafka Lag và throughput thực tế.
 
 ### Phase 5: CI/CD & Automation — 50%
 
