@@ -152,11 +152,12 @@ services:
     container_name: nexus-kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - NODE_OPTIONS=--max-old-space-size=1024
     ports:
       - "5601:5601"
     depends_on:
       - elasticsearch
-    mem_limit: 400mb
+    mem_limit: 1024mb
     restart: unless-stopped
 
   # ==========================================
