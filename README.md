@@ -47,10 +47,10 @@ Công nghệ thay đổi liên tục, nhưng tư duy giải quyết vấn đề 
 - [ ] **Centralized Configuration:** Sử dụng Spring Cloud Config quản lý biến môi trường tập trung.
 
 ### Phase 2: Design Patterns & Consistency (Kiến trúc & Tính nhất quán)
-- [ ] **Saga Pattern (Choreography):** Triển khai cơ chế rollback dữ liệu giữa các service thông qua Message Broker.
-- [ ] **Database per Service:** Tách biệt database hoàn toàn và xử lý bài toán truy vấn dữ liệu ở tầng Application.
-- [ ] **CQRS Pattern:** Thử nghiệm tách biệt luồng Read và Write để tối ưu hiệu năng.
-- [ ] **Idempotency Consumer:** Đảm bảo xử lý tin nhắn từ Broker không bị trùng lặp dữ liệu.
+- [x] **Saga Pattern (Choreography):** Triển khai cơ chế rollback dữ liệu giữa các service thông qua Message Broker.
+- [x] **Database per Service:** Tách biệt database hoàn toàn và xử lý bài toán truy vấn dữ liệu ở tầng Application.
+- [x] **CQRS Pattern:** Thử nghiệm tách biệt luồng Read và Write để tối ưu hiệu năng.
+- [x] **Idempotency Consumer:** Đảm bảo xử lý tin nhắn từ Broker không bị trùng lặp dữ liệu.
 
 ### Phase 3: Reliability & Performance (Độ tin cậy & Hiệu suất)
 - [x] **Resilience4j Integration:** Triển khai Circuit Breaker và Retry cho giao tiếp synchronous (REST).
