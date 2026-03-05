@@ -11,7 +11,7 @@ Mọi thiết lập ở đây phụ thuộc vào file `docker-compose.yml`, cho 
 | Tên Service | Tiện ích (Role) | Cổng Host (Port) | Mật khẩu truy cập | Usage/Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
 | **PostgreSQL 15** | Relational Database (SQL) | `5432` | `nexus_user` / `nexus_password` | Lưu trữ dữ liệu chuẩn ACID cho Order/User Service. Bật `wal_level=logical` cho CDC. |
-| **MongoDB 6.0** | NoSQL Database | `27017` | `root` / `rootpassword` | Lưu trữ cấu trúc JSON linh hoạt cho Product Catalog, Inventory. |
+| **MongoDB 6.0** | NoSQL Database | `27017` | `root" / "rootpassword` | Lưu trữ cấu trúc JSON linh hoạt cho Product Catalog, Inventory. |
 | **Redis 7** | Caching, Rate Limit, Session | `6379` | *None* | Cắm mốc (Tăng tốc đọc DB, Limit lưu lượng API Gateway). |
 | **RabbitMQ 3** | Message Broker (Sync/Async) | `5672` (AMQP) <br> `15672` (UI) | `admin` / `admin123` | Quản lý Hàng đợi (Message Queue) cho Task xử lý chậm. |
 | **Kafka 3.7.0** | Event Streaming (Pub/Sub) | `9092` | *None* | Luồng sự kiện thời gian thực (Event-Driven), Saga Pattern Choreography. |
