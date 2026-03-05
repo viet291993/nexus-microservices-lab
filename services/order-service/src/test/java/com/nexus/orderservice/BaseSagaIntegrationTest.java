@@ -22,6 +22,9 @@ import org.slf4j.LoggerFactory;
 public abstract class BaseSagaIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(BaseSagaIntegrationTest.class);
+    
+    private static final boolean ALLOW_HOST_FALLBACK =
+            Boolean.parseBoolean(System.getenv().getOrDefault("E2E_ALLOW_HOST_FALLBACK", "false"));
 
     @LocalServerPort
     protected int port;
@@ -62,11 +65,17 @@ public abstract class BaseSagaIntegrationTest {
                 log.info("📍 PostgreSQL: {}", postgres.getJdbcUrl());
                 log.info("📍 Kafka: {}", kafka.getBootstrapServers());
                 log.info("📍 Elasticsearch: {}", elasticsearch.getHttpHostAddress());
+            } else if (ALLOW_HOST_FALLBACK) {
+                log.warn("⚠️ [E2E] Docker not available. Falling back to local/host infrastructure. To disable, set E2E_ALLOW_HOST_FALLBACK=false");
             } else {
-                log.warn("⚠️ [E2E] Docker not available. Falling back to local/host infrastructure.");
+                throw new IllegalStateException("Docker không khả dụng cho E2E test. Fail-fast được kích hoạt.");
             }
         } catch (Exception e) {
-            log.error("❌ [E2E] Failed to start Testcontainers. Falling back to host.", e);
+            if (ALLOW_HOST_FALLBACK) {
+                log.error("❌ [E2E] Failed to start Testcontainers. Falling back to host.", e);
+            } else {
+                throw new ExceptionInInitializerError(e);
+            }
         }
     }
 

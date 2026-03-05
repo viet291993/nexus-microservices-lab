@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-@Disabled("Tạm thời vô hiệu hóa để tránh lỗi Docker Desktop trên Windows trong quá trình học tập")
 public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(SagaE2EIntegrationTest.class);
@@ -65,8 +64,7 @@ public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
                 log.info("✅ [TEST] Đã tạo Index 'orders' thành công.");
             }
         } catch (Exception e) {
-            log.error("❌ [TEST ERROR] Không thể kết nối hoặc khởi tạo Elasticsearch Index: {}", e.getMessage());
-            // Không throw exception ở đây để xem các bước verify sau nảy sinh lỗi gì cụ thể hơn
+            throw new IllegalStateException("Không thể kết nối hoặc khởi tạo Elasticsearch Index cho E2E test", e);
         }
     }
 
@@ -158,6 +156,11 @@ public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
             try {
                 OrderEventPayload payload = objectMapper.readValue(payloadBytes, OrderEventPayload.class);
                 log.info("🤖 [Mock Inventory] Nhận event OrderCreated cho orderId: {}", payload.getOrderId());
+                String eventType = String.valueOf(payload.getEventType());
+                if (!"ORDER_CREATED".equals(eventType)) {
+                    log.debug("🤖 [Mock Inventory] Bỏ qua eventType={} cho orderId={}", eventType, payload.getOrderId());
+                    return;
+                }
 
                 InventoryResponsePayload response = new InventoryResponsePayload()
                         .withOrderId(payload.getOrderId())

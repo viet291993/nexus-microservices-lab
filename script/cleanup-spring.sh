@@ -6,12 +6,15 @@ echo "=========================================="
 
 echo "[1/4] Dừng toàn bộ các tiến trình Java/Spring Boot đang chạy..."
 # Tìm và kill các tiến trình java có chứa đường dẫn nexus-microservices-lab
-PIDS=$(ps aux | grep java | grep nexus-microservices-lab | grep -v grep | awk '{print $2}')
+PIDS=$(pgrep -f "java.*nexus-microservices-lab")
 
 if [ -z "$PIDS" ]; then
     echo "  -> Không có tiến trình Spring Boot nào đang chạy."
 else
-    echo "  -> Đang kill các PIDs: $PIDS"
+    echo "  -> Đang gửi SIGTERM (Graceful shutdown) tới PIDs: $PIDS"
+    kill -15 $PIDS 2>/dev/null
+    sleep 2
+    echo "  -> Đang ép buộc dừng (kill -9) nếu vẫn còn chạy..."
     kill -9 $PIDS 2>/dev/null
     echo "  -> Đã dọn dẹp xong tiến trình."
 fi

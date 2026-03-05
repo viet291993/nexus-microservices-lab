@@ -51,4 +51,17 @@ class OrderProducerServiceTest {
                 assertThat(new String(keyBytes))
                                 .isEqualTo("ORDER-123");
         }
+
+        @Test
+        void sendOrderEvent_shouldFailWhenProducerReturnsFalse() {
+                var payload = new OrderEventPayload();
+                payload.setOrderId("ORDER-123");
+
+                when(serviceEventsProducer.sendOrderEvents(
+                                org.mockito.ArgumentMatchers.eq(payload),
+                                org.mockito.ArgumentMatchers.any())).thenReturn(false);
+
+                assertThatThrownBy(() -> orderProducerService.sendOrderEvent(payload))
+                                .isInstanceOf(IllegalStateException.class);
+        }
 }

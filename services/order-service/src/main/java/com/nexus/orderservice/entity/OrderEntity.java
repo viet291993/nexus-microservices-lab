@@ -34,8 +34,12 @@ public class OrderEntity {
      * Trạng thái hiện tại của đơn hàng.
      * Giá trị: PENDING, CONFIRMED, CANCELLED.
      */
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private OrderStatus status;
+
+    @Version
+    private Long version;
 
     // === CONSTRUCTORS === //
 
@@ -43,7 +47,7 @@ public class OrderEntity {
         // JPA yêu cầu constructor rỗng.
     }
 
-    public OrderEntity(String orderId, String productId, int quantity, String status) {
+    public OrderEntity(String orderId, String productId, int quantity, OrderStatus status) {
         this.orderId = orderId;
         this.productId = productId;
         this.quantity = quantity;
@@ -61,12 +65,25 @@ public class OrderEntity {
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public OrderStatus getStatus() { return status; }
+    public void setStatus(OrderStatus status) { this.status = status; }
 
     @Override
     public String toString() {
         return "OrderEntity{orderId='" + orderId + "', productId='" + productId +
                 "', quantity=" + quantity + ", status='" + status + "'}";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OrderEntity that = (OrderEntity) o;
+        return orderId != null && orderId.equals(that.orderId);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

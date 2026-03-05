@@ -43,15 +43,12 @@ public class OrderQueryController {
         if (orderId != null) {
             return searchRepository.findById(orderId)
                     .map(doc -> ResponseEntity.ok(List.of(doc)))
-                    .orElse(ResponseEntity.notFound().build());
+                    .orElse(ResponseEntity.ok(List.of()));
         }
 
         List<OrderDocument> results;
         if (status != null && productId != null) {
-            // Có thể thêm method này vào searchRepository nếu cần search kép
-            results = searchRepository.findByStatus(status).stream()
-                    .filter(doc -> productId.equals(doc.getProductId()))
-                    .toList();
+            results = searchRepository.findByStatusAndProductId(status, productId);
         } else if (status != null) {
             results = searchRepository.findByStatus(status);
         } else if (productId != null) {

@@ -40,6 +40,7 @@ public class OrderDocument {
 
     public void setId(String id) {
         this.id = id;
+        this.orderId = id;
     }
 
     public String getOrderId() {
@@ -48,6 +49,7 @@ public class OrderDocument {
 
     public void setOrderId(String orderId) {
         this.orderId = orderId;
+        this.id = orderId;
     }
 
     public String getProductId() {

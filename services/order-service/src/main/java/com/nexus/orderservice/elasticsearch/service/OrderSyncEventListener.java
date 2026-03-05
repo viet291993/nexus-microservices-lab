@@ -34,12 +34,14 @@ public class OrderSyncEventListener {
 
         // Kiểm tra Idempotency: Không ghi đè trạng thái cuối (CONFIRMED/CANCELLED) bằng PENDING
         searchRepository.findById(orderId).ifPresentOrElse(existingDoc -> {
-            if (isFinalStatus(existingDoc.getStatus()) && "PENDING".equalsIgnoreCase(newStatus)) {
-                log.warn("♻️ [CQRS IDEMPOTENT] Bỏ qua cập nhật PENDING cho Order {} vì đã ở trạng thái cuối: {}",
-                        orderId, existingDoc.getStatus());
-            } else {
-                updateDocument(event);
+            if (isFinalStatus(existingDoc.getStatus())) {
+                if (!existingDoc.getStatus().equalsIgnoreCase(newStatus)) {
+                    log.warn("♻️ [CQRS IDEMPOTENT] Bỏ qua cập nhật {} cho Order {} vì đã ở trạng thái cuối: {}",
+                            newStatus, orderId, existingDoc.getStatus());
+                }
+                return;
             }
+            updateDocument(event);
         }, () -> {
             updateDocument(event);
         });

@@ -2,7 +2,7 @@ spring:
   application:
     name: order-service
   config:
-    import: "optional:configserver:http://localhost:8888/"
+    import: "configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
   cloud:
     function:
       definition: process-inventory-response

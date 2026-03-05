@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import com.nexus.orderservice.elasticsearch.events.OrderSyncEvent;
 import com.nexus.orderservice.entity.OrderEntity;
+import com.nexus.orderservice.entity.OrderStatus;
 import com.nexus.orderservice.events.consumer.IProcessInventoryResponseConsumerService;
 import com.nexus.orderservice.events.model.InventoryResponsePayload;
 import com.nexus.orderservice.repository.OrderRepository;
@@ -61,27 +62,27 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
 
         // Xử lý Saga
         if (InventoryResponsePayload.InventoryEventType.INVENTORY_CONFIRMED == eventType) {
-            order.setStatus("CONFIRMED");
+            order.setStatus(OrderStatus.CONFIRMED);
             orderRepository.save(order);
             log.info("✅ [SAGA CONFIRMED] Đơn hàng {} → CONFIRMED. Kho đã trừ.", orderId);
 
             eventPublisher.publishEvent(
-                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(), "CONFIRMED"));
+                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(), OrderStatus.CONFIRMED.name()));
 
         } else if (InventoryResponsePayload.InventoryEventType.INVENTORY_FAILED == eventType) {
             // Idempotent: nếu đơn hàng đã bị CANCELLED trước đó thì bỏ qua failure event
             // lặp lại.
-            if ("CANCELLED".equalsIgnoreCase(order.getStatus())) {
+            if (OrderStatus.CANCELLED == order.getStatus()) {
                 log.warn("♻️ [SAGA ROLLBACK] Bỏ qua Inventory FAILED lặp lại cho đơn hàng {} (đã CANCELLED trước đó).",
                         orderId);
                 return;
             }
-            order.setStatus("CANCELLED");
+            order.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(order);
             log.warn("🚫 [SAGA ROLLBACK] Đơn hàng {} → CANCELLED. Lý do: {}", orderId, message);
 
             eventPublisher.publishEvent(
-                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(), "CANCELLED"));
+                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(), OrderStatus.CANCELLED.name()));
         }
     }
 }

@@ -54,6 +54,14 @@ curl -X POST http://localhost:8082/api/v1/orders \
      -d '{"productId": "PROD-001", "quantity": 5}'
 ```
 
+### 5. Tìm kiếm đơn hàng (Search API - CQRS)
+Dịch vụ cung cấp API tìm kiếm siêu tốc qua Elasticsearch nhờ cơ chế CQRS.
+Bạn có thể tìm kiếm theo `orderId`, `status`, và `productId`:
+```bash
+# Tìm kiếm theo trạng thái và mã sản phẩm
+curl -X GET "http://localhost:8082/api/v1/orders/query/search?status=CONFIRMED&productId=PROD-001"
+```
+
 ---
 
 ## 📖 Tài liệu chi tiết

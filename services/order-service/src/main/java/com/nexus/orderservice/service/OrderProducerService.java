@@ -32,6 +32,9 @@ public class OrderProducerService {
      * @param event Đối tượng OrderEventPayload (generated từ AsyncAPI)
      */
     public void sendOrderEvent(OrderEventPayload event) {
+        if (event == null || event.getOrderId() == null || event.getOrderId().isBlank()) {
+            throw new IllegalArgumentException("event và event.orderId là bắt buộc");
+        }
         log.info("📦 [PRODUCER] Đang gửi OrderEventPayload lên Kafka qua ZenWave Generated Producer: {}", event);
 
         // ZenWave tạo hàm sendOrderEvents hỗ trợ thêm headers (như messageKey).

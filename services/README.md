@@ -8,7 +8,7 @@ Tại Phase 2 này, dự án đang mô phỏng cấu trúc **Đa ngôn ngữ** (
 
 ## 📂 Danh sách Services
 
-*   **`order-service`**: Microservice bằng `Java (Spring Boot 3)` xử lý đặt hàng, giao dịch ACID, nối kết PostgreSQL.
+*   **`order-service`**: Microservice bằng `Java (Spring Boot 4.0.3)` xử lý đặt hàng, giao dịch ACID, nối kết PostgreSQL.
 *   **`inventory-service`**: Microservice bằng `NodeJS (NestJS)` xử lý số lượng và danh mục con kho hàng, nối MongoDB lấy tính linh hoạt (JSON Document).
 
 ---

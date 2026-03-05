@@ -13,4 +13,6 @@ public interface OrderSearchRepository extends ElasticsearchRepository<OrderDocu
     List<OrderDocument> findByStatus(String status);
 
     List<OrderDocument> findByProductId(String productId);
+
+    List<OrderDocument> findByStatusAndProductId(String status, String productId);
 }

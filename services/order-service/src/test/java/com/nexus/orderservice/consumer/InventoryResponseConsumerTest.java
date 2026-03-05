@@ -1,6 +1,7 @@
 package com.nexus.orderservice.consumer;
 
 import com.nexus.orderservice.entity.OrderEntity;
+import com.nexus.orderservice.entity.OrderStatus;
 import com.nexus.orderservice.events.model.InventoryResponsePayload;
 import com.nexus.orderservice.repository.OrderRepository;
 import org.springframework.context.ApplicationEventPublisher;
@@ -30,7 +31,7 @@ class InventoryResponseConsumerTest {
     @Test
     void processInventoryResponse_shouldConfirmOrderWhenInventoryConfirmed() {
         // Arrange
-        var order = new OrderEntity("O001", "P001", 5, "PENDING");
+        var order = new OrderEntity("O001", "P001", 5, OrderStatus.PENDING);
         when(orderRepository.findById("O001")).thenReturn(Optional.of(order));
 
         var payload = new InventoryResponsePayload();
@@ -42,14 +43,14 @@ class InventoryResponseConsumerTest {
         consumer.processInventoryResponse(payload, null);
 
         // Assert
-        assertThat(order.getStatus()).isEqualTo("CONFIRMED");
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         verify(orderRepository).save(eq(order));
     }
 
     @Test
     void processInventoryResponse_shouldCancelOrderWhenInventoryFailed() {
         // Arrange
-        var order = new OrderEntity("O001", "P001", 5, "PENDING");
+        var order = new OrderEntity("O001", "P001", 5, OrderStatus.PENDING);
         when(orderRepository.findById("O001")).thenReturn(Optional.of(order));
 
         var payload = new InventoryResponsePayload();
@@ -61,7 +62,7 @@ class InventoryResponseConsumerTest {
         consumer.processInventoryResponse(payload, null);
 
         // Assert
-        assertThat(order.getStatus()).isEqualTo("CANCELLED");
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         verify(orderRepository).save(eq(order));
     }
 
@@ -85,7 +86,7 @@ class InventoryResponseConsumerTest {
     @Test
     void processInventoryResponse_shouldBeIdempotentForDuplicateFailureEvent() {
         // Arrange
-        var order = new OrderEntity("O001", "P001", 5, "CANCELLED");
+        var order = new OrderEntity("O001", "P001", 5, OrderStatus.CANCELLED);
         when(orderRepository.findById("O001")).thenReturn(Optional.of(order));
 
         var payload = new InventoryResponsePayload();
@@ -97,7 +98,7 @@ class InventoryResponseConsumerTest {
         consumer.processInventoryResponse(payload, null);
 
         // Assert
-        assertThat(order.getStatus()).isEqualTo("CANCELLED");
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         verify(orderRepository, never()).save(any());
     }
 }
