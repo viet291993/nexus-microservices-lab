@@ -38,7 +38,7 @@ spring:
               dlq-partitions: 1
         binder:
           brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-      
+
       # Chiến lược Retry (Cố gắng thử lại trước khi đẩy vào DLQ)
       bindings:
         process-inventory-response-in-0:
@@ -61,6 +61,12 @@ management:
     web:
       exposure:
         include: health,info,refresh
+  tracing:
+    sampling:
+      probability: 1.0
+    zipkin:
+      tracing:
+        endpoint: http://nexus-zipkin:9411/api/v2/spans
 
 ---
 spring:
@@ -70,7 +76,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-
 ---
 spring:
   config:

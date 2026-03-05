@@ -25,3 +25,9 @@ management:
     web:
       exposure:
         include: health,info
+  tracing:
+    sampling:
+      probability: 1.0 # 100% request sẽ được trace (local dev/test)
+    zipkin:
+      tracing:
+        endpoint: http://nexus-zipkin:9411/api/v2/spans
