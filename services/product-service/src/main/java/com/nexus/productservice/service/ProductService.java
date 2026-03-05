@@ -18,11 +18,11 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    @Cacheable(value = "products", key = "#id")
+    `@Cacheable`(value = "products", key = "#id")
     public Product getProductById(String id) {
         log.info("🔍 [DB] Fetching product from MongoDB: {}", id);
         return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found: " + id));
     }
 
     @Cacheable(value = "productList")
@@ -50,7 +50,10 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    @CacheEvict(value = {"products", "productList"}, allEntries = true)
+    `@Caching`(evict = {
+            `@CacheEvict`(value = "products", key = "#id"),
+            `@CacheEvict`(value = "productList", allEntries = true)
+    })
     public void deleteProduct(String id) {
         log.info("🗑️ [DB] Deleting product from MongoDB: {}", id);
         productRepository.deleteById(id);

@@ -26,10 +26,10 @@ Tăng tốc độ truy vấn danh mục sản phẩm và giảm tải cho Databa
 ## 3. Config Server Security & Secrets Management
 Bảo vệ tài nguyên cấu hình và mã hóa thông tin nhạy cảm.
 
-- **Authentication:** Basic Auth (`nexus_admin` / `nexus_secret`).
+- **Authentication:** Basic Auth qua biến môi trường (ví dụ: `${CONFIG_SERVER_USERNAME}` / `${CONFIG_SERVER_PASSWORD}`), không hard-code trong tài liệu.
 - **JCE Encryption:** Cho phép mã hóa các mật khẩu trong file YAML.
 - **Cách sử dụng:**
-  1. Mã hóa: `curl -u nexus_admin:nexus_secret localhost:8888/encrypt -d "your_password"`.
+  1. Mã hóa: `curl -u ${CONFIG_SERVER_USERNAME}:${CONFIG_SERVER_PASSWORD} localhost:8888/encrypt -d "your_password"`.
   2. Cấu hình: Thay giá trị bằng `{cipher}chuỗi_đã_mã_hóa`.
 
 ## 4. Troubleshooting Playbook cho Phase 3

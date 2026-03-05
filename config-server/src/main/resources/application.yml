@@ -11,7 +11,7 @@ spring:
     security:
         user:
             name: nexus_admin
-            password: ${CONFIG_SERVER_PASSWORD:nexus_secret}
+            password: ${CONFIG_SERVER_PASSWORD}
     
     # CẤU HÌNH MÃ HÓA (Để dùng {cipher} trong YAML)
     cloud:
@@ -23,4 +23,4 @@ spring:
 
 # KEY MÃ HÓA (Dành cho JCE) - Phải được giữ bí mật tuyệt đối trong thực tế
 encrypt:
-    key: "nexus-architect-lab-secret-key"
+    key: ${CONFIG_SERVER_ENCRYPT_KEY}
