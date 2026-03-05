@@ -46,7 +46,6 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 
 ### 4. Chaos Engineering (Mô phỏng đổ vỡ)
 * Chủ động "kill" service hoặc dừng Kafka để kiểm chứng khả năng tự phục hồi và tính đúng đắn của dữ liệu sau khi hệ thống ổn định trở lại.
-*   Chủ động "kill" service hoặc dừng Kafka để kiểm chứng khả năng tự phục hồi và tính đúng đắn của dữ liệu sau khi hệ thống ổn định trở lại.
 
 ---
 
@@ -65,12 +64,13 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 - [x] **CQRS Pattern:** Tách biệt Write (JPA) và Read (Elasticsearch + ES|QL).
 - [x] **Idempotency Consumer:** Đảm bảo không xử lý lặp sự kiện trong Kafka.
 
-### Phase 3: Reliability & Performance — 100%
+### Phase 3: Reliability & Performance — 100% ✅
 - [x] **Resilience4j Integration:** Circuit Breaker & Retry cho REST communication.
-- [x] **Dead Letter Queue (DLQ):** Triển khai cơ chế cách ly tin nhắn lỗi trên Kafka để tránh treo hệ thống.
-- [x] **Security & Secrets Management:** Mã hóa thông tin nhạy cảm và bảo mật Config Server (Issue #13).
-- [x] **Distributed Caching:** Redis Cache Aside pattern cho Product catalog (tại `product-service`).
-- [x] **Rate Limiting:** Gateway side protection.
+- [x] **Dead Letter Queue (DLQ):** Triển khai cơ chế cách ly tin nhắn lỗi trên Kafka.
+- [x] **Security & Secrets Management:** Mã hóa Secrets và bảo mật Config Server ([Issue #13](https://github.com/viet291993/nexus-microservices-lab/issues/13)).
+- [x] **Distributed Caching:** Redis Cache Aside cho Product catalog.
+- [x] **Rate Limiting:** Bảo vệ hệ thống từ phía Gateway.
+👉 **[Xem chi tiết hướng dẫn vận hành Phase 3 tại đây](./services/docs/phase-3-walkthrough.md)**
 
 ### Phase 4: Observability — 20%
 - [ ] **Centralized Logging (ELK):** Đẩy log tập trung về Kibana qua Logstash.
