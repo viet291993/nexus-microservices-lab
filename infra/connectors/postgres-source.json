@@ -1,0 +1,24 @@
+{
+  "name": "postgres-source",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "tasks.max": "1",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "nexus_user",
+    "database.password": "nexus_password",
+    "database.dbname": "nexus_db",
+    "topic.prefix": "nexus",
+    "schema.include.list": "public",
+    "table.include.list": "public.orders",
+    "plugin.name": "pgoutput",
+    "slot.name": "nexus_debezium_slot",
+    "publication.name": "nexus_debezium_publication",
+    "database.history.kafka.bootstrap.servers": "kafka:9092",
+    "database.history.kafka.topic": "schema-changes.nexus",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter.schemas.enable": "false"
+  }
+}

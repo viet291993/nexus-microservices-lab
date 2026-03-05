@@ -10,45 +10,50 @@ Mọi thiết lập ở đây phụ thuộc vào file `docker-compose.yml`, cho 
 
 | Tên Service | Tiện ích (Role) | Cổng Host (Port) | Mật khẩu truy cập | Usage/Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
-| **PostgreSQL 15** | Relational Database (SQL) | `5432` | `nexus_user` / `nexus_password` | Lưu trữ dữ liệu chuẩn ACID cho Order/User Service. |
+| **PostgreSQL 15** | Relational Database (SQL) | `5432` | `nexus_user` / `nexus_password` | Lưu trữ dữ liệu chuẩn ACID cho Order/User Service. Bật `wal_level=logical` cho CDC. |
 | **MongoDB 6.0** | NoSQL Database | `27017` | `root` / `rootpassword` | Lưu trữ cấu trúc JSON linh hoạt cho Product Catalog, Inventory. |
 | **Redis 7** | Caching, Rate Limit, Session | `6379` | *None* | Cắm mốc (Tăng tốc đọc DB, Limit lưu lượng API Gateway). |
-| **RabbitMQ 3** | Message Broker (Sync/Async) | `5672` (AMQP) <br> `15672` (UI) | `admin` / `admin123` | Quản lý Hàng đợi (Message Queue) cho Task xử lý chậm. Mở cổng 15672 trên Browser để xem Dashboard. |
-| **Kafka 3.7.0** | Event Streaming (Pub/Sub) | `9092` | *None* | Luồng sự kiện thời gian thực (Event-Driven), Saga Pattern Choreography. Dùng bản gốc Apache (apache/kafka) chạy Mode KRaft (bỏ Zk). |
-| **Keycloak 24** | Identity & Access Management | `8081` | `admin` / `admin` | Trung tâm bảo mật (OAuth2/OpenID). Cấp phát JWT Access Token, SSO (Mở `localhost:8081`). |
+| **RabbitMQ 3** | Message Broker (Sync/Async) | `5672` (AMQP) <br> `15672` (UI) | `admin` / `admin123` | Quản lý Hàng đợi (Message Queue) cho Task xử lý chậm. |
+| **Kafka 3.7.0** | Event Streaming (Pub/Sub) | `9092` | *None* | Luồng sự kiện thời gian thực (Event-Driven), Saga Pattern Choreography. |
+| **Elasticsearch 9.2.0** | Search Engine (Fast Read) | `9200` | *None* | Database phục vụ truy vấn tốc độ cao (CQRS). Hỗ trợ ES|QL mạnh mẽ. |
+| **Kibana 8.12.2** | Data Visualization (ES UI) | `5601` | *None* | Giao diện quản lý và truy vấn Elasticsearch. |
+| **Kafka Connect** | CDC Pipeline Engine | `8083` | *None* | Nền tảng chạy các Connector (Debezium Postgres, ES Sink) để đồng bộ dữ liệu tự động. |
+| **Keycloak 24** | Identity & Access Management | `8081` | `admin` / `admin` | Trung tâm bảo mật (OAuth2/OpenID). Cấp phát JWT Access Token, SSO. |
 
 ---
 
-## 🚀 Hướng dẫn khởi chạy (Usage)
+## 🏗️ Kiến trúc Tự động hóa CDC (Change Data Capture)
 
-Vui lòng chắc chắn rằng bạn đã mở **Docker Desktop** (hoặc tiến trình Docker Daemon) trên máy chủ trước khi thực thi lệnh.
+Hệ thống hạ tầng Nexus hỗ trợ cơ chế đồng bộ dữ liệu **Tự động 100%** từ Postgres sang Elasticsearch thông qua mô hình CDC:
 
-### 1. Khởi chạy toàn bộ hệ thống
-Gõ lệnh sau tại thư mục gốc của dự án (`nexus-microservices-lab`):
-```bash
-docker-compose -f infra/docker-compose.yml up -d
-```
-*(Nếu bạn đã `cd infra` vào trong thư mục này rồi thì chỉ cần gõ `docker-compose up -d`)*
+1.  **Cấu trúc thư mục chuyên nghiệp:**
+    *   `connectors/`: Chứa các file cấu hình nghiệp vụ dạng JSON (Postgres Source & ES Sink).
+    *   `scripts/`: Chứa các kịch bản Bash cài đặt plugin (`kafka-connect-init.sh`) và tự động kích hoạt Connector (`cdc-provisioning.sh`).
+2.  **Cơ chế vận hành:**
+    *   Sử dụng **Advanced `depends_on`** trong Docker Compose để đảm bảo các dịch vụ hạ tầng lên đúng thứ tự.
+    *   Service `cdc-provisioner` sẽ tự động đợi `kafka-connect` sẵn sàng (`service_healthy`) rồi mới tiến hành nạp cấu hình.
 
-Docker sẽ lấy config, tải images nặng từ Internet (nếu chạy lần đầu), giải nén và kích hoạt dưới dạng container ẩn.
+---
 
-### 2. Khởi chạy từng phần (Chống nghẽn RAM/Mạng)
-Nếu bạn chỉ tham gia lập trình/test cho 1 Service nhất định (Gateway) và máy bạn bị thiếu RAM, bạn nên chạy riêng biệt tên dịch vụ bằng lệnh:
+## 🚀 Hướng dẫn vận hành Lab (Lab Manager)
 
-```bash
-# Đứng tại thư mục gốc, chỉ chạy redis và keycloak
-docker-compose -f infra/docker-compose.yml up -d redis keycloak
-```
+Để tự động hóa và đơn giản hóa việc quản lý hơn 10 dịch vụ hạ tầng, chúng tôi đã xây dựng bộ công cụ **Lab Manager**. Bạn không cần nhớ các lệnh Docker phức tạp nữa.
 
-### 3. Tắt và dọn dẹp (Teardown)
-Mọi dữ liệu của hệ thống DB/Keycloak đã được lưu vào phân vùng `volumes` riêng biệt cứng (Ví dụ `postgres_data`, `redis_data`). Khởi động lại hệ thống không làm mất dữ liệu.
+### 1. Sử dụng trên Windows (PowerShell)
+Mở Terminal tại thư mục `infra/` và sử dụng lệnh `.\manage.ps1`:
+- **Khởi động toàn bộ:** `.\manage.ps1 start`
+- **Dừng hệ thống:** `.\manage.ps1 stop`
+- **Kiểm tra trạng thái:** `.\manage.ps1 status`
+- **Xem Log dịch vụ:** `.\manage.ps1 logs <tên_service>` (VD: `.\manage.ps1 logs kafka-connect`)
+- **Dọn dẹp & Reset dữ liệu:** `.\manage.ps1 clean`
 
-Tắt toàn bộ container nhưng giữ lại Data:
-```bash
-docker-compose down
-```
+### 2. Sử dụng trên Linux/WSL (Bash)
+Cấp quyền thực thi lần đầu: `chmod +x manage.sh`, sau đó sử dụng:
+- `./manage.sh {start|stop|status|logs|clean}`
 
-👉 *Cảnh báo siêu nguy hiểm:* Lệnh sau sẽ **hủy diệt TOÀN BỘ dữ liệu cấu hình thực tế** của Database nội tại. Chỉ sử dụng nếu bạn muốn reset dự án từ con số 0:
-```bash
-docker-compose down -v
-```
+---
+
+## 🛠️ Lưu ý về Tài nguyên (Optimization)
+Hệ thống đã được cấu hình **Resource Limits** (Giới hạn RAM) cho từng Container để đảm bảo Lab có thể chạy mượt mà trên máy cá nhân có RAM từ 16GB trở lên. 
+
+Nếu máy bạn bị giật lag, hãy dùng lệnh `status` để kiểm tra container nào đang chiếm dụng nhiều tài nguyên nhất.
