@@ -1,0 +1,152 @@
+asyncapi: "2.6.0"
+id: "urn:nexus:microservices:saga-event-contracts"
+defaultContentType: "application/json"
+tags:
+  - name: "saga"
+  - name: "kafka"
+info:
+  title: Nexus Microservices - Saga Event Contracts
+  version: "1.0.0"
+  description: >
+    Bản thiết kế Shared Event Schema (Source of Truth) dùng cho Order Service (Java) 
+    và Inventory Service (NestJS) trong kiến trúc Saga Choreography.
+  contact:
+    name: Nexus Team
+    url: "https://github.com/viet291993/nexus-microservices-lab"
+    email: contact@nexus.local
+  license:
+    name: Apache 2.0
+    url: "https://www.apache.org/licenses/LICENSE-2.0"
+
+servers:
+  local-kafka:
+    url: localhost:9092
+    protocol: kafka
+    description: Local Kafka broker running via Docker Compose
+
+channels:
+  order-events-topic:
+    description: Topic dành cho các sự kiện xuất phát từ luồng Đơn hàng (Order)
+    publish:
+      summary: Order Service gửi sự kiện tạo đơn hàng vào topic này.
+      operationId: sendOrderEvents
+      message:
+        $ref: "#/components/messages/OrderCreated"
+    subscribe:
+      summary: Inventory Service lắng nghe topic này để trừ kho.
+      operationId: processOrderEvents
+      message:
+        $ref: "#/components/messages/OrderCreated"
+
+  inventory-events-topic:
+    description: Topic dành cho các sự kiện từ Inventory Service (Kết quả xử lý kho)
+    publish:
+      summary: Inventory Service trả kết quả về topic này sau khi xử lý trừ kho.
+      operationId: sendInventoryResponse
+      message:
+        $ref: "#/components/messages/InventoryResponse"
+    subscribe:
+      summary: Order Service lắng nghe topic này để cập nhật trạng thái đơn (Thành công/Thất bại).
+      operationId: processInventoryResponse
+      message:
+        $ref: "#/components/messages/InventoryResponse"
+
+components:
+  messages:
+    OrderCreated:
+      name: OrderCreated
+      title: Sự kiện Khởi tạo Đơn hàng
+      summary: Được kích hoạt khi Order Service nhận một request đặt hàng hợp lệ. Trạng thái PENDING.
+      payload:
+        $ref: "#/components/schemas/OrderEventPayload"
+      bindings:
+        kafka:
+          key:
+            $ref: "#/components/schemas/OrderKeySchema"
+
+    InventoryResponse:
+      name: InventoryResponse
+      title: Sự kiện Phản hồi từ Inventory Service
+      summary: >
+        Kết quả xử lý kho. Phân biệt loại event bằng field eventType:
+        INVENTORY_CONFIRMED (trừ kho thành công) hoặc INVENTORY_FAILED (thất bại).
+      payload:
+        $ref: "#/components/schemas/InventoryResponsePayload"
+      bindings:
+        kafka:
+          key:
+            $ref: "#/components/schemas/OrderKeySchema"
+
+  schemas:
+    OrderKeySchema:
+      type: string
+      description: "Sử dụng orderId (UUID) làm key để đảm bảo thứ tự xử lý trong cùng một Partition"
+      example: "123e4567-e89b-12d3-a456-426614174000"
+
+    OrderEventPayload:
+      type: object
+      description: Cấu trúc dữ liệu chuẩn của Event (DTO) dùng chung cho cả Order và Inventory.
+      required:
+        - orderId
+        - productId
+        - quantity
+        - eventType
+      properties:
+        orderId:
+          type: string
+          description: Mã định danh duy nhất của Đơn hàng (UUID)
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        productId:
+          type: string
+          description: Mã định danh của Sản phẩm
+          example: "PROD-001"
+        quantity:
+          type: integer
+          description: Số lượng sản phẩm cần đặt hoặc trừ kho
+          minimum: 1
+          example: 5
+        status:
+          title: OrderStatus
+          type: string
+          description: Trạng thái của đơn hàng trong hệ thống (Dùng để update database)
+          enum: [PENDING, CONFIRMED, CANCELLED, FAILED]
+          example: "PENDING"
+        eventType:
+          title: OrderEventType
+          type: string
+          description: Dấu hiệu nhận biết loại Event để Consumer chuyển hướng xử lý (Routing)
+          enum: [ORDER_CREATED, INVENTORY_CONFIRMED, INVENTORY_FAILED]
+          example: "ORDER_CREATED"
+
+    InventoryResponsePayload:
+      type: object
+      description: Cấu trúc dữ liệu phản hồi từ Inventory Service (bao gồm thêm trường message mô tả kết quả).
+      required:
+        - orderId
+        - productId
+        - quantity
+        - eventType
+      properties:
+        orderId:
+          type: string
+          description: Mã định danh duy nhất của Đơn hàng (UUID)
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        productId:
+          type: string
+          description: Mã định danh của Sản phẩm
+          example: "PROD-001"
+        quantity:
+          type: integer
+          description: Số lượng sản phẩm đã xử lý
+          minimum: 1
+          example: 5
+        eventType:
+          title: InventoryEventType
+          type: string
+          description: Loại event phản hồi (INVENTORY_CONFIRMED hoặc INVENTORY_FAILED)
+          enum: [INVENTORY_CONFIRMED, INVENTORY_FAILED]
+          example: "INVENTORY_CONFIRMED"
+        message:
+          type: string
+          description: Thông điệp mô tả kết quả xử lý từ Inventory Service
+          example: "Đã trừ kho thành công"

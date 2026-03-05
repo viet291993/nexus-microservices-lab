@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: order-service
+  config:
+    import: "configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
+  cloud:
+    function:
+      definition: process-inventory-response
+    stream:
+      bindings:
+        # Binding cho hàm consume (đã tạo với bean name là process-inventory-response)
+        process-inventory-response-in-0:
+          destination: inventory-events-topic
+          group: order-service-group
+        
+        # Binding cho lệnh gửi event (trong Producer sinh ra)
+        send-order-events-out-0:
+          destination: order-events-topic

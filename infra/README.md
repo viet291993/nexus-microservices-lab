@@ -14,7 +14,7 @@ Mọi thiết lập ở đây phụ thuộc vào file `docker-compose.yml`, cho 
 | **MongoDB 6.0** | NoSQL Database | `27017` | `root` / `rootpassword` | Lưu trữ cấu trúc JSON linh hoạt cho Product Catalog, Inventory. |
 | **Redis 7** | Caching, Rate Limit, Session | `6379` | *None* | Cắm mốc (Tăng tốc đọc DB, Limit lưu lượng API Gateway). |
 | **RabbitMQ 3** | Message Broker (Sync/Async) | `5672` (AMQP) <br> `15672` (UI) | `admin` / `admin123` | Quản lý Hàng đợi (Message Queue) cho Task xử lý chậm. Mở cổng 15672 trên Browser để xem Dashboard. |
-| **Kafka 3.5** | Event Streaming (Pub/Sub) | `9092` | *None* | Luồng sự kiện thời gian thực (Event-Driven), Saga Pattern Choreography. Chạy Mode KRaft (bỏ Zk). |
+| **Kafka 3.7.0** | Event Streaming (Pub/Sub) | `9092` | *None* | Luồng sự kiện thời gian thực (Event-Driven), Saga Pattern Choreography. Dùng bản gốc Apache (apache/kafka) chạy Mode KRaft (bỏ Zk). |
 | **Keycloak 24** | Identity & Access Management | `8081` | `admin` / `admin` | Trung tâm bảo mật (OAuth2/OpenID). Cấp phát JWT Access Token, SSO (Mở `localhost:8081`). |
 
 ---

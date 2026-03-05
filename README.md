@@ -4,6 +4,8 @@
 
 ---
 
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/viet291993/nexus-microservices-lab?utm_source=oss&utm_medium=github&utm_campaign=viet291993%2Fnexus-microservices-lab&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 ## 🏗️ Architecture
 
 * **API Gateway:** Spring Cloud Gateway (Rate limiting, Dynamic Routing).
@@ -16,7 +18,7 @@
 
 ## 🛠️ Tech Stack
 
-* **Core:** Java (Spring Boot), NodeJS (NestJS).
+* **Core:** Java (Spring Boot), NodeJS (NestJS), Python (FastAPI).
 * **Infra:** Docker, Docker-Compose, GitHub Actions.
 * **Storage:** Redis (Cache), SQL & NoSQL.
 * **Observability:** ELK Stack, Prometheus & Grafana.

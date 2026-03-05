@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 spring:
   application:
     # Trùng với tên file api-gateway.yml chứa cấu hình khổng lồ nằm bên trong thư mục config-repo của máy chủ Config.
