@@ -1,0 +1,27 @@
+server:
+  port: 8083
+
+spring:
+  # CẦU HÌNH DATABASE (MongoDB)
+  data:
+    mongodb:
+      uri: ${MONGO_URL}
+
+    # CẤU HÌNH REDIS
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+# CẤU HÌNH SERVICE DISCOVERY (EUREKA)
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://eureka-server:8761/eureka/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

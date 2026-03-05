@@ -5,10 +5,22 @@ spring:
     application:
         name: config-server
     profiles:
-        active: native # Dùng thư mục cục bộ (Native) để quản lý cấu hình, phù hợp chạy local
+        active: native
+    
+    # BẢO MẬT CONFIG SERVER (Phase 3)
+    security:
+        user:
+            name: nexus_admin
+            password: ${CONFIG_SERVER_PASSWORD}
+    
+    # CẤU HÌNH MÃ HÓA (Để dùng {cipher} trong YAML)
     cloud:
         config:
             server:
                 native:
                     # Trỏ thẳng vào thư mục source file ở máy tính (thay vì classpath) để hỗ trợ cập nhật thay đổi file ngay lập tức (Hot Reloading) mà không cần build lại.
                     search-locations: "classpath:/config-repo/,file:./config-server/src/main/resources/config-repo/,file:./src/main/resources/config-repo/"
+
+# KEY MÃ HÓA (Dành cho JCE) - Phải được giữ bí mật tuyệt đối trong thực tế
+encrypt:
+    key: ${CONFIG_SERVER_ENCRYPT_KEY}

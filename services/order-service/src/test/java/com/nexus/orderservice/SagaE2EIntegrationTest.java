@@ -8,7 +8,6 @@ import com.nexus.orderservice.events.model.OrderEventPayload;
 import com.nexus.orderservice.elasticsearch.entity.OrderDocument;
 import com.nexus.orderservice.elasticsearch.repository.OrderSearchRepository;
 import com.nexus.orderservice.repository.OrderRepository;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
