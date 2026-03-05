@@ -25,43 +25,64 @@
 
 ---
 
-## 🧠 Lab Notes (Key Learnings)
+## 🏛️ Architect's Philosophy (Tư duy Kiến trúc)
 
-### 1. Giải mã Architecture qua "Docs & AI"
-Thay vì học vẹt, phương pháp cốt lõi là kết hợp giữa **Official Documentation** để nắm vững nền tảng và **AI** để phản biện kiến trúc. AI đóng vai trò như một *Senior Partner* để brainstorm các phương án (như *Saga Orchestration vs Choreography*), sau đó tiến hành xác thực bằng code thực tế.
+Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tập trung vào việc "Làm sao để các mảnh ghép kết nối và vận hành bền bỉ?" chứ không chỉ là code tính năng CRUD.
 
-### 2. Tư duy "Connect the dots"
-Trọng tâm của dự án không nằm ở việc học cú pháp mà là kỹ năng **kết nối hệ thống**. Từ việc đóng gói Docker, điều phối tin nhắn qua Kafka đến quản lý log tập trung – đây là quá trình hệ thống hóa toàn diện bức tranh Backend.
+### 1. Infrastructure as Code (Hạ tầng là duy nhất)
+* Hệ thống phải có khả năng dựng lại hoàn toàn từ con số 0 chỉ bằng một lệnh: `docker-compose up -d` (từ thư mục `infra`).
+* Toàn bộ Database, Message Broker, Search Engine và Identity Provider (Keycloak) được container hóa và cấu hình sẵn mạng nội bộ.
 
-### 3. Tự học là kỹ năng sinh tồn
-Công nghệ thay đổi liên tục, nhưng tư duy giải quyết vấn đề là bất biến. Việc tự thiết lập toàn bộ hạ tầng từ con số 0 giúp rèn luyện khả năng thích nghi nhanh với bất kỳ Tech Stack nào trong môi trường thực tế.
+### 2. Integration over Implementation (Kết nối là trọng tâm)
+* **Contract First:** Ưu tiên định nghĩa cấu trúc Event/API (ZenWave) trước khi viết logic.
+* **Resilience:** Tập trung xử lý **Retry**, **Dead Letter Queue** và **Circuit Breaker** (Resilience4j). Một mảnh vỡ không được phép làm sập toàn bộ bức tranh.
+* **Data Consistency:** Xử lý bài toán nhất quán dữ liệu qua Saga Choreography và đồng bộ CQRS giữa Postgres - Elasticsearch.
+
+### 3. Observability is Mandatory (Giám sát là bắt buộc)
+* **Traceability:** Mọi request được gắn `correlation_id` xuyên suốt từ Gateway qua Kafka đến ELK Stack.
+* **Unified Dashboard:** Theo dõi sức khỏe hệ thống (CPU/RAM/Kafka Lag) qua Prometheus & Grafana.
+* **Troubleshooting Playbook:** Quy trình chuẩn để "bắt bệnh" hệ thống. 👉 [Xem chi tiết tại đây](./services/docs/troubleshooting-playbook.md)
+
+### 4. Chaos Engineering (Mô phỏng đổ vỡ)
+* Chủ động "kill" service hoặc dừng Kafka để kiểm chứng khả năng tự phục hồi và tính đúng đắn của dữ liệu sau khi hệ thống ổn định trở lại.
+*   Chủ động "kill" service hoặc dừng Kafka để kiểm chứng khả năng tự phục hồi và tính đúng đắn của dữ liệu sau khi hệ thống ổn định trở lại.
 
 ---
 
-## 🛠️ Research & Development Roadmap
+## 🚀 Research & Development Roadmap
 
-### Phase 1: Foundation & Connectivity (Hạ tầng & Kết nối)
-- [ ] **Setup Infrastructure with Docker Compose:** Cấu hình tập trung Postgres, Redis, RabbitMQ và Kafka.
-- [x] **API Gateway Implementation:** Thiết lập Spring Cloud Gateway, cấu hình dynamic routing và custom filters.
-- [x] **Service Discovery:** Triển khai Netflix Eureka hoặc Consul để quản lý danh sách service.
-- [ ] **Centralized Configuration:** Sử dụng Spring Cloud Config quản lý biến môi trường tập trung.
+### Phase 1: Foundation & Connectivity — 100%
+- [x] **Setup Infrastructure with Docker Compose:** Postgres, Redis, RabbitMQ, Kafka, MongoDB, Keycloak, ELK Stack.
+- [x] **API Gateway Implementation:** Spring Cloud Gateway, dynamic routing, rate limiting.
+- [x] **Service Discovery:** Netflix Eureka.
+- [x] **Centralized Configuration:** Spring Cloud Config API.
+- [x] **API Testing & UI:** Triển khai **Swagger/Postman Collection** để kích hoạt và kiểm thử các luồng (Low priority UI).
 
-### Phase 2: Design Patterns & Consistency (Kiến trúc & Tính nhất quán)
-- [ ] **Saga Pattern (Choreography):** Triển khai cơ chế rollback dữ liệu giữa các service thông qua Message Broker.
-- [ ] **Database per Service:** Tách biệt database hoàn toàn và xử lý bài toán truy vấn dữ liệu ở tầng Application.
-- [ ] **CQRS Pattern:** Thử nghiệm tách biệt luồng Read và Write để tối ưu hiệu năng.
-- [ ] **Idempotency Consumer:** Đảm bảo xử lý tin nhắn từ Broker không bị trùng lặp dữ liệu.
+### Phase 2: Design Patterns & Consistency — 100%
+- [x] **Saga Pattern (Choreography):** Lưu đơn PENDING -> Phản hồi từ Kho -> Cập nhật trạng thái.
+- [x] **Database per Service:** PostgreSQL (Order) & MongoDB (Inventory).
+- [x] **CQRS Pattern:** Tách biệt Write (JPA) và Read (Elasticsearch + ES|QL).
+- [x] **Idempotency Consumer:** Đảm bảo không xử lý lặp sự kiện trong Kafka.
 
-### Phase 3: Reliability & Performance (Độ tin cậy & Hiệu suất)
-- [x] **Resilience4j Integration:** Triển khai Circuit Breaker và Retry cho giao tiếp synchronous (REST).
-- [ ] **Distributed Caching:** Sử dụng Redis Cache Aside pattern để giảm tải cho database chính.
-- [x] **Rate Limiting:** Cấu hình giới hạn request tại Gateway để bảo vệ hệ thống.
+### Phase 3: Reliability & Performance — 60%
+- [x] **Resilience4j Integration:** Circuit Breaker & Retry cho REST communication.
+- [ ] **Dead Letter Queue (DLQ):** Triển khai cơ chế cách ly tin nhắn lỗi trên Kafka để tránh treo hệ thống.
+- [ ] **Distributed Caching:** Redis Cache Aside pattern cho Product catalog.
+- [x] **Rate Limiting:** Gateway side protection.
 
-### Phase 4: Observability (Khả năng giám sát)
-- [ ] **Centralized Logging (ELK):** Đẩy log từ tất cả service về Elasticsearch thông qua Logstash.
-- [ ] **Distributed Tracing:** Tích hợp Zipkin hoặc Sleuth để theo dõi hành trình request.
-- [ ] **Metrics Dashboard:** Thiết lập Prometheus và Grafana để quan sát CPU, RAM và throughput thực tế.
+### Phase 4: Observability — 20%
+- [ ] **Centralized Logging (ELK):** Đẩy log tập trung về Kibana qua Logstash.
+- [ ] **Distributed Tracing:** Tích hợp Zipkin/Tempo để theo dõi hành trình request (correlation_id).
+- [ ] **Metrics & Monitoring:** Thiết lập **Grafana Dashboard** mẫu (Prometheus) để quan sát CPU, RAM, Kafka Lag và throughput thực tế.
 
 ### Phase 5: CI/CD & Automation
-- [ ] **GitHub Actions:** Tự động hóa quy trình chạy Unit Test và Build Docker Image.
-- [ ] **Infrastructure as Code:** Viết script để thiết lập nhanh môi trường phát triển chỉ với một câu lệnh.
+- [ ] **GitHub Actions:** Tự động hóa quy trình test và build images.
+- [ ] **Infrastructure as Code:** Viết script thiết lập nhanh môi trường.
+
+---
+
+## 🧠 Lab Notes (Key Learnings)
+
+1. **Connect the dots:** Trọng tâm dự án không nằm ở cú pháp Java/NodeJS mà nằm ở cách điều phối tin nhắn qua Kafka và quản lý trạng thái phân tán.
+2. **Standardization:** Việc áp dụng `correlation_id` và chuẩn hóa Log format là "cứu cánh" duy nhất khi hệ thống Microservices trở nên phức tạp.
+3. **Troubleshoot before Fix:** Luôn dùng Playbook để xác định nguyên nhân tại Monitor/Log trước khi thay đổi bất kỳ dòng code nào.
