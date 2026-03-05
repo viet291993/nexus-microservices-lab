@@ -30,7 +30,7 @@ switch ($Action) {
     }
 
     "restart" {
-        Write-Host "🔄 Đang khởi động lại dịch vụ: $($Service -if $Service -else 'ALL')" -ForegroundColor Cyan
+        Write-Host "🔄 Đang khởi động lại dịch vụ: $(if ($Service) { $Service } else { 'ALL' })" -ForegroundColor Cyan
         if ($Service) {
             docker-compose -f $ComposeFile restart $Service
         } else {
