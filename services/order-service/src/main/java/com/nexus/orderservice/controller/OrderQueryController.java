@@ -33,18 +33,30 @@ public class OrderQueryController {
      */
     @GetMapping("/search")
     public ResponseEntity<List<OrderDocument>> searchOrders(
+            @RequestParam(required = false) String orderId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String productId) {
 
-        log.info("🔍 [CQRS QUERY] Tìm kiếm đơn hàng với status={}, productId={}", status, productId);
+        log.info("🔍 [CQRS QUERY] Tìm kiếm đơn hàng với orderId={}, status={}, productId={}", 
+                orderId, status, productId);
+
+        if (orderId != null) {
+            return searchRepository.findById(orderId)
+                    .map(doc -> ResponseEntity.ok(List.of(doc)))
+                    .orElse(ResponseEntity.notFound().build());
+        }
 
         List<OrderDocument> results;
-        if (status != null) {
+        if (status != null && productId != null) {
+            // Có thể thêm method này vào searchRepository nếu cần search kép
+            results = searchRepository.findByStatus(status).stream()
+                    .filter(doc -> productId.equals(doc.getProductId()))
+                    .toList();
+        } else if (status != null) {
             results = searchRepository.findByStatus(status);
         } else if (productId != null) {
             results = searchRepository.findByProductId(productId);
         } else {
-            // Nếu không có filter, trả về toàn bộ
             Iterable<OrderDocument> all = searchRepository.findAll();
             results = new java.util.ArrayList<>();
             all.forEach(results::add);

@@ -27,9 +27,25 @@ public class OrderSyncEventListener {
      */
     @EventListener
     public void handleOrderSyncEvent(OrderSyncEvent event) {
-        log.info("🔄 [CQRS SYNC] Đồng bộ Order {} sang Elasticsearch với trạng thái: {}",
-                event.getOrderId(), event.getStatus());
+        String orderId = event.getOrderId();
+        String newStatus = event.getStatus();
 
+        log.info("🔄 [CQRS SYNC] Nhận event đồng bộ Order {} (Status: {})", orderId, newStatus);
+
+        // Kiểm tra Idempotency: Không ghi đè trạng thái cuối (CONFIRMED/CANCELLED) bằng PENDING
+        searchRepository.findById(orderId).ifPresentOrElse(existingDoc -> {
+            if (isFinalStatus(existingDoc.getStatus()) && "PENDING".equalsIgnoreCase(newStatus)) {
+                log.warn("♻️ [CQRS IDEMPOTENT] Bỏ qua cập nhật PENDING cho Order {} vì đã ở trạng thái cuối: {}",
+                        orderId, existingDoc.getStatus());
+            } else {
+                updateDocument(event);
+            }
+        }, () -> {
+            updateDocument(event);
+        });
+    }
+
+    private void updateDocument(OrderSyncEvent event) {
         OrderDocument document = new OrderDocument(
                 event.getOrderId(),
                 event.getProductId(),
@@ -37,6 +53,11 @@ public class OrderSyncEventListener {
                 event.getStatus());
 
         searchRepository.save(document);
-        log.info("✅ [CQRS SYNC SUCCESS] Đã lưu Order {} vào Elasticsearch Index", event.getOrderId());
+        log.info("✅ [CQRS SYNC SUCCESS] Đã lưu Order {} vào Elasticsearch Index (Status: {})",
+                event.getOrderId(), event.getStatus());
+    }
+
+    private boolean isFinalStatus(String status) {
+        return "CONFIRMED".equalsIgnoreCase(status) || "CANCELLED".equalsIgnoreCase(status);
     }
 }

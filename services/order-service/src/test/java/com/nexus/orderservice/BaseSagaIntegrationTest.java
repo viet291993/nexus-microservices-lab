@@ -58,9 +58,12 @@ public abstract class BaseSagaIntegrationTest {
                 kafka.start();
                 mongodb.start();
                 elasticsearch.start();
-                log.info("🐳 [E2E] Testcontainers started successfully.");
+                log.info("✅ [E2E] Testcontainers started successfully.");
+                log.info("📍 PostgreSQL: {}", postgres.getJdbcUrl());
+                log.info("📍 Kafka: {}", kafka.getBootstrapServers());
+                log.info("📍 Elasticsearch: {}", elasticsearch.getHttpHostAddress());
             } else {
-                log.warn("⚠️ [E2E] Docker not available. Falling back to host infrastructure.");
+                log.warn("⚠️ [E2E] Docker not available. Falling back to local/host infrastructure.");
             }
         } catch (Exception e) {
             log.error("❌ [E2E] Failed to start Testcontainers. Falling back to host.", e);
@@ -95,9 +98,12 @@ public abstract class BaseSagaIntegrationTest {
         }
 
         if (elasticsearch != null && elasticsearch.isRunning()) {
-            registry.add("spring.elasticsearch.uris", () -> "http://" + elasticsearch.getHttpHostAddress());
+            String esUri = "http://" + elasticsearch.getHttpHostAddress();
+            registry.add("spring.elasticsearch.uris", () -> esUri);
+            // Một số bản Spring Boot cũ/khác có thể dùng property này
+            registry.add("spring.data.elasticsearch.cluster-nodes", () -> elasticsearch.getHttpHostAddress());
         } else {
-            log.info("🔗 [E2E] Connecting to host Elasticsearch at localhost:9200");
+            log.info("🔗 [E2E] Falling back to host Elasticsearch at localhost:9200");
             registry.add("spring.elasticsearch.uris", () -> "http://localhost:9200");
         }
 
