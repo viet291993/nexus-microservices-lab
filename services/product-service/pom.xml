@@ -10,7 +10,6 @@
 	</parent>
 	<groupId>com.nexus</groupId>
 	<artifactId>product-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>product-service</name>
 	<description>Product Service with Redis Caching</description>
 	<dependencies>

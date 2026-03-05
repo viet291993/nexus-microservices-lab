@@ -10,7 +10,6 @@
 	</parent>
 	<groupId>com.nexus</groupId>
 	<artifactId>eureka-server</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>Eureka Server</name>
 	<description>Service Discovery Server for Nexus Microservices</description>
 	<url/>

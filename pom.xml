@@ -23,6 +23,7 @@
 		<module>config-server</module>
 		<module>services/order-service</module>
 		<module>services/product-service</module>
+		<module>shared/nexus-common</module>
 	</modules>
 
 	<properties>
@@ -48,11 +49,11 @@
 			<artifactId>zipkin-reporter-brave</artifactId>
 		</dependency>
 
-		<!-- Common Observability: JSON Logging -->
+		<!-- Common Infrastructure: Shared configuration and logic (already includes logstash) -->
 		<dependency>
-			<groupId>net.logstash.logback</groupId>
-			<artifactId>logstash-logback-encoder</artifactId>
-			<version>${logstash-encoder.version}</version>
+			<groupId>com.nexus</groupId>
+			<artifactId>nexus-common</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 
 		<!-- Common Tools: Lombok (Compile only/Optional) -->

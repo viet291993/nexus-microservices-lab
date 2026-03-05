@@ -10,7 +10,6 @@
 	</parent>
 	<groupId>com.nexus</groupId>
 	<artifactId>api-gateway</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>API Gateway</name>
 	<description>API Gateway for Nexus Microservices</description>
 	<url/>
