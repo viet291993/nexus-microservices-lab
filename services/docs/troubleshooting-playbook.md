@@ -45,7 +45,7 @@ Lấy một `correlation_id` từ log lỗi và thực hiện truy vết chuỗi
 
 ### 🛑 Nhóm 1: Kafka / Integration
 - **Dấu hiệu**: Consumer lag tăng, Broker disconnect, Timeout khi produce.
-- **Hành động**: 
+- **Hành động**:
     1. Kiểm tra tình trạng Container Kafka.
     2. Kiểm tra **Dead Letter Queue (DLQ)** topic (VD: `inventory-events-topic.dlq`). Nếu có tin nhắn trong này, nghĩa là logic xử lý đã thất bại sau nhiều lần Retry.
     3. Phân tích nguyên nhân trong tin nhắn chết (Header chứa lỗi) và nạp lại (Reprocess) nếu cần.

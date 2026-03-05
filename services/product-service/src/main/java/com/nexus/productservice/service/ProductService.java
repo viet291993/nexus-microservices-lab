@@ -7,7 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -18,7 +21,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
-    `@Cacheable`(value = "products", key = "#id")
+    @Cacheable(value = "products", key = "#id")
     public Product getProductById(String id) {
         log.info("🔍 [DB] Fetching product from MongoDB: {}", id);
         return productRepository.findById(id)
@@ -50,9 +53,9 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    `@Caching`(evict = {
-            `@CacheEvict`(value = "products", key = "#id"),
-            `@CacheEvict`(value = "productList", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "products", key = "#id"),
+            @CacheEvict(value = "productList", allEntries = true)
     })
     public void deleteProduct(String id) {
         log.info("🗑️ [DB] Deleting product from MongoDB: {}", id);

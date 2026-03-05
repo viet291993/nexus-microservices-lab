@@ -3,6 +3,7 @@ package com.nexus.productservice.controller;
 import com.nexus.productservice.entity.Product;
 import com.nexus.productservice.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,8 +26,8 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductById(id));
     }
 
-    `@PostMapping`
-    public ResponseEntity<Product> createProduct(`@RequestBody` Product product) {
+    @PostMapping
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
         Product created = productService.createProduct(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

@@ -5,12 +5,12 @@ spring:
   # CẤU HÌNH DATABASE (MongoDB)
   data:
     mongodb:
-      uri: ${MONGO_URL:mongodb://root:rootpassword@localhost:27017/nexus_db?authSource=admin}
+      uri: ${MONGO_URL}
     
     # CẤU HÌNH REDIS
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
 # CẤU HÌNH SERVICE DISCOVERY (EUREKA)
 eureka:

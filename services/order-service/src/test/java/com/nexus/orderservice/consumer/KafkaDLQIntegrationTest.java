@@ -38,15 +38,18 @@ public class KafkaDLQIntegrationTest extends BaseSagaIntegrationTest {
                 .when(orderRepository).findById(anyString());
 
         // 2. Gửi một message tới topic chính
+        String orderId = "test-order-dlq-" + java.util.UUID.randomUUID();
+        String groupId = "test-dlq-group-" + java.util.UUID.randomUUID();
+
         InventoryResponsePayload payload = new InventoryResponsePayload()
-                .withOrderId("test-order-dlq")
+                .withOrderId(orderId)
                 .withEventType(InventoryResponsePayload.InventoryEventType.INVENTORY_CONFIRMED)
                 .withMessage("Test DLQ");
 
         kafkaTemplate.send("inventory-events-topic", payload);
 
         // 3. Thiết lập consumer để lắng nghe từ DLQ topic
-        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafka.getBootstrapServers(), "test-dlq-group", false);
+        Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(kafka.getBootstrapServers(), groupId, false);
         consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -59,7 +62,7 @@ public class KafkaDLQIntegrationTest extends BaseSagaIntegrationTest {
         ConsumerRecord<String, String> received = KafkaTestUtils.getSingleRecord(consumer, "inventory-events-topic.dlq", Duration.ofSeconds(20));
 
         assertThat(received).isNotNull();
-        assertThat(received.value()).contains("test-order-dlq");
+        assertThat(received.value()).contains(orderId);
         
         consumer.close();
     }

@@ -5,6 +5,7 @@ Tài liệu này tổng hợp toàn bộ các tính năng đã triển khai tron
 ---
 
 ## 1. Dead Letter Queue (DLQ) & Retry Strategy
+
 Cơ chế giúp hệ thống tự phục hồi và cách ly các lỗi xử lý dữ liệu bất đồng bộ.
 
 - **Cấu hình:** Tập trung tại `config-server` cho `order-service`.
@@ -15,6 +16,7 @@ Cơ chế giúp hệ thống tự phục hồi và cách ly các lỗi xử lý 
 - **Kiểm chứng:** Đã có bài test tích hợp tại `KafkaDLQIntegrationTest.java`. Bài test này giả lập lỗi DB và kiểm tra message trong DLQ topic.
 
 ## 2. Distributed Caching (Redis) & Product Service
+
 Tăng tốc độ truy vấn danh mục sản phẩm và giảm tải cho Database chính.
 
 - **Microservice mới:** `product-service` (Java Spring Boot + MongoDB).
@@ -24,6 +26,7 @@ Tăng tốc độ truy vấn danh mục sản phẩm và giảm tải cho Databa
 - **Base Image:** Sử dụng `eclipse-temurin:17-jre-jammy` để vá các lỗ hổng bảo mật (High CVEs) và tối ưu hiệu suất.
 
 ## 3. Config Server Security & Secrets Management
+
 Bảo vệ tài nguyên cấu hình và mã hóa thông tin nhạy cảm.
 
 - **Authentication:** Basic Auth qua biến môi trường (ví dụ: `${CONFIG_SERVER_USERNAME}` / `${CONFIG_SERVER_PASSWORD}`), không hard-code trong tài liệu.
@@ -33,6 +36,7 @@ Bảo vệ tài nguyên cấu hình và mã hóa thông tin nhạy cảm.
   2. Cấu hình: Thay giá trị bằng `{cipher}chuỗi_đã_mã_hóa`.
 
 ## 4. Troubleshooting Playbook cho Phase 3
+
 Khi hệ thống có tin nhắn trong DLQ:
 1. Kiểm tra log của `order-service` để tìm `correlation_id` của tin nhắn lỗi.
 2. Xác định nguyên nhân (Lỗi logic hay lỗi hạ tầng tạm thời).
