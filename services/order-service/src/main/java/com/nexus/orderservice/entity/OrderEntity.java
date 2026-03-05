@@ -1,6 +1,7 @@
 package com.nexus.orderservice.entity;
 
 import jakarta.persistence.*;
+import java.util.Objects;
 
 /**
  * Entity JPA đại diện cho một Đơn hàng trong bảng "orders" của PostgreSQL.
@@ -79,11 +80,11 @@ public class OrderEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OrderEntity that = (OrderEntity) o;
-        return orderId != null && orderId.equals(that.orderId);
+        return Objects.equals(orderId, that.orderId);
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hash(orderId);
     }
 }

@@ -1,36 +1,33 @@
 import { Controller, Get } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 
 /**
  * Controller chịu trách nhiệm cung cấp endpoint kiểm tra sức khỏe tổng thể của service.
- *
- * - Mục đích:
- *   - Cho các hệ thống giám sát (Eureka, Kubernetes, Docker, Prometheus, v.v.) gọi vào
- *     để kiểm tra xem service còn "sống" hay không.
- *   - Làm endpoint chung cho toàn bộ Inventory Service, không gắn trực tiếp với domain "kho hàng".
- *
- * - Đường dẫn:
- *   - GET /health
- *   - Trả về JSON đơn giản để các tool health-check có thể parse dễ dàng.
  */
 @Controller()
 export class HealthController {
+  constructor(@InjectConnection() private readonly connection: Connection) {}
+
   /**
-   * Endpoint health đơn giản.
-   *
-   * - Trả về:
-   *   - status: 'UP' => Service đang chạy bình thường.
-   * - Có thể mở rộng sau này:
-   *   - Kiểm tra kết nối MongoDB, Kafka, hoặc các dịch vụ phụ trợ khác.
+   * Endpoint health đơn giản (Liveness check).
    */
   @Get('health')
   getHealth() {
-    // Liveness check
-    return { status: 'UP' };
+    return { status: 'UP', timestamp: new Date().toISOString() };
   }
 
+  /**
+   * Endpoint readiness (Readiness check).
+   * Kiểm tra xem các dependency quan trọng (như MongoDB) đã sẵn sàng chưa.
+   */
   @Get('readiness')
   getReadiness() {
-    // Readiness check - can be expanded to check DB/Kafka connectivity
-    return { status: 'UP' };
+    const isDbConnected = this.connection.readyState === 1; // 1 = connected
+    return {
+      status: isDbConnected ? 'UP' : 'DOWN',
+      timestamp: new Date().toISOString(),
+      database: isDbConnected ? 'CONNECTED' : 'DISCONNECTED',
+    };
   }
 }
