@@ -4,14 +4,15 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>com.nexus</groupId>
-		<artifactId>nexus-microservices-lab</artifactId>
+		<artifactId>nexus-service-parent</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
-		<relativePath>../../pom.xml</relativePath>
+		<relativePath>../../shared/nexus-service-parent/pom.xml</relativePath>
 	</parent>
-	<groupId>com.nexus</groupId>
 	<artifactId>product-service</artifactId>
 	<name>product-service</name>
-	<description>Product Service with Redis Caching</description>
+	<description>Product Service for Nexus</description>
+	<url/>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -30,10 +31,6 @@
 			<artifactId>spring-boot-starter-cache</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.nexus</groupId>
-			<artifactId>nexus-common</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-config</artifactId>
 		</dependency>
@@ -47,22 +44,5 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 
 </project>

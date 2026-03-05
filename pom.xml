@@ -24,6 +24,7 @@
 		<module>services/order-service</module>
 		<module>services/product-service</module>
 		<module>shared/nexus-common</module>
+		<module>shared/nexus-service-parent</module>
 	</modules>
 
 	<properties>
@@ -33,23 +34,7 @@
 	</properties>
 
 	<dependencies>
-		<!-- Common Core: Actuator for Health/Metrics -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-
-		<!-- Common Observability: Tracing -->
-		<dependency>
-			<groupId>io.micrometer</groupId>
-			<artifactId>micrometer-tracing-bridge-brave</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.zipkin.reporter2</groupId>
-			<artifactId>zipkin-reporter-brave</artifactId>
-		</dependency>
-
-		<!-- Common Tools: Lombok (Compile only/Optional) -->
+		<!-- Truly global parent-level dependencies (only Lombok for example) -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -59,7 +44,7 @@
 
 	<dependencyManagement>
 		<dependencies>
-			<!-- Shared Common Module Management -->
+			<!-- Version Management for the whole project ecosystem -->
 			<dependency>
 				<groupId>com.nexus</groupId>
 				<artifactId>nexus-common</artifactId>
@@ -94,6 +79,7 @@
 	<build>
 		<pluginManagement>
 			<plugins>
+				<!-- Centrally manage plugin configuration without forcing application on every module -->
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
