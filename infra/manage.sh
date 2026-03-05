@@ -4,7 +4,8 @@
 # SCRIPT QUẢN LÝ TẬP TRUNG NEXUS LAB (Automation)
 # ==========================================
 
-COMPOSE_FILE="docker-compose.yml"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 
 echo -e "\n--- [ Nexus Lab Manager ] ---\n"
 
