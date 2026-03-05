@@ -34,7 +34,7 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    @CachePut(value = "products", key = "#product.id")
+    @CachePut(value = "products", key = "#result.id", unless = "#result == null || #result.id == null")
     @CacheEvict(value = "productList", allEntries = true)
     public Product createProduct(Product product) {
         log.info("➕ [DB] Creating product in MongoDB: {}", product.getName());

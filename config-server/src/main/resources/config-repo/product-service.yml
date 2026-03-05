@@ -2,21 +2,17 @@ server:
   port: 8083
 
 spring:
-  # CẤU HÌNH DATABASE (MongoDB)
+  # CẦU HÌNH DATABASE (MongoDB)
   data:
     mongodb:
       uri: ${MONGO_URL}
-    
+
     # CẤU HÌNH REDIS
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 
 # CẤU HÌNH SERVICE DISCOVERY (EUREKA)
-eureka:
-  instance:
-    prefer-ip-address: true
-  client:
 eureka:
   instance:
     prefer-ip-address: true
