@@ -28,7 +28,7 @@ public class ProductService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found: " + id));
     }
 
-    @Cacheable(value = "productList")
+    @Cacheable(value = "productList", sync = true)
     public List<Product> getAllProducts() {
         log.info("🔍 [DB] Fetching all products from MongoDB");
         return productRepository.findAll();
