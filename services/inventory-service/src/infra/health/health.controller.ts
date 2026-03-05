@@ -24,6 +24,13 @@ export class HealthController {
    */
   @Get('health')
   getHealth() {
+    // Liveness check
+    return { status: 'UP' };
+  }
+
+  @Get('readiness')
+  getReadiness() {
+    // Readiness check - can be expanded to check DB/Kafka connectivity
     return { status: 'UP' };
   }
 }

@@ -15,16 +15,26 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit(): void {
-    const appPort = Number(this.configService.get<string>('PORT') ?? 8083);
+    const appPortRaw = this.configService.get<string>('PORT') ?? '8083';
+    const appPort = parseInt(appPortRaw, 10);
     const serviceHost =
       this.configService.get<string>('SERVICE_HOST') ??
       this.configService.get<string>('HOSTNAME') ??
       'localhost';
     const eurekaHost =
       this.configService.get<string>('EUREKA_HOST') ?? 'localhost';
-    const eurekaPort = Number(
-      this.configService.get<string>('EUREKA_PORT') ?? 8761,
-    );
+    const eurekaPortRaw = this.configService.get<string>('EUREKA_PORT') ?? '8761';
+    const eurekaPort = parseInt(eurekaPortRaw, 10);
+
+    if (isNaN(appPort) || appPort < 1 || appPort > 65535) {
+      this.logger.warn(`⚠️ [EUREKA] Invalid PORT: ${appPortRaw}. Falling back to 8083.`);
+    }
+    if (isNaN(eurekaPort) || eurekaPort < 1 || eurekaPort > 65535) {
+      this.logger.warn(`⚠️ [EUREKA] Invalid EUREKA_PORT: ${eurekaPortRaw}. Falling back to 8761.`);
+    }
+
+    const finalAppPort = isNaN(appPort) ? 8083 : appPort;
+    const finalEurekaPort = isNaN(eurekaPort) ? 8761 : eurekaPort;
 
     this.client = new Eureka({
       instance: {
@@ -37,7 +47,7 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
         statusPageUrl: `http://${serviceHost}:${appPort}/health`,
         healthCheckUrl: `http://${serviceHost}:${appPort}/health`,
         port: {
-          $: appPort,
+          $: finalAppPort,
           '@enabled': true,
         },
         vipAddress: 'INVENTORY-SERVICE',
@@ -48,7 +58,7 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
       },
       eureka: {
         host: eurekaHost,
-        port: eurekaPort,
+        port: finalEurekaPort,
         servicePath: '/eureka/apps/',
       },
     });

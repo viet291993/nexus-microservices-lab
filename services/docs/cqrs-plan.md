@@ -32,21 +32,23 @@ Tài liệu này chi tiết hóa kế hoạch triển khai mẫu thiết kế CQ
 - [x] Xây dựng `OrderSyncEventListener` (Read-side):
     - [x] Lắng nghe sự kiện `OrderSyncEvent` (tạo ra từ `OrderCreatedEvent`, v.v.).
     - [x] Cập nhật/chèn dữ liệu vào Elasticsearch Index.
-- [ ] Xử lý Idempotency sâu: Kiểm tra version/timestamp của event.
+- [x] Xử lý Idempotency sâu: Kiểm tra trạng thái cuối để tránh ghi đè dữ liệu.
 
 ### Phase 4: Query Service (Read)
 - [x] Tạo `OrderQueryController`.
-- [ ] Implement API `GET /api/v1/orders/search` nâng cao.
-- [ ] Hoàn tất Integration Test (SagaE2EIntegrationTest) - **Đang xử lý**.
-
----
-
-## 4. Nhật ký triển khai (Implementation Log)
-Các vấn đề gặp phải và cách xử lý được ghi lại tại: [implementation_log.md](implementation_log.md)
+- [x] Implement API `GET /api/v1/orders/query/search-esql` nâng cao.
+- [x] Hoàn tất Integration Test (SagaE2EIntegrationTest).
 
 ---
 
 ## 3. Luồng dữ liệu (Data Flow)
+
 1. **User** -> `POST /orders` -> **PostgreSQL** (Save) -> **Kafka** (Publish `OrderCreated`).
 2. **Kafka** -> **CQRS Sync Manager** (Listen) -> **Elasticsearch** (Save/Update).
 3. **User** -> `GET /orders` -> **Elasticsearch** (Fast Read).
+
+---
+
+## 4. Nhật ký triển khai (Implementation Log)
+
+Các vấn đề gặp phải và cách xử lý được ghi lại tại: [implementation_log.md](implementation_log.md)

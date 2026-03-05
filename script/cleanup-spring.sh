@@ -1,4 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "=========================================="
 echo "    NEXUS MICROSERVICES - CLEANUP SCRIPT"
@@ -6,28 +10,31 @@ echo "=========================================="
 
 echo "[1/4] Dừng toàn bộ các tiến trình Java/Spring Boot đang chạy..."
 # Tìm và kill các tiến trình java có chứa đường dẫn nexus-microservices-lab
-PIDS=$(pgrep -f "java.*nexus-microservices-lab")
+PIDS=$(pgrep -f "java.*nexus-microservices-lab" || true)
 
 if [ -z "$PIDS" ]; then
     echo "  -> Không có tiến trình Spring Boot nào đang chạy."
 else
     echo "  -> Đang gửi SIGTERM (Graceful shutdown) tới PIDs: $PIDS"
-    kill -15 $PIDS 2>/dev/null
+    kill -15 $PIDS 2>/dev/null || true
     sleep 2
-    echo "  -> Đang ép buộc dừng (kill -9) nếu vẫn còn chạy..."
-    kill -9 $PIDS 2>/dev/null
+    STILL_RUNNING=$(pgrep -f "java.*nexus-microservices-lab" || true)
+    if [ -n "$STILL_RUNNING" ]; then
+        echo "  -> Đang ép buộc dừng (kill -9) còn lại..."
+        kill -9 $STILL_RUNNING 2>/dev/null || true
+    fi
     echo "  -> Đã dọn dẹp xong tiến trình."
 fi
 
 echo ""
 echo "[2/4] Dừng và xóa toàn bộ Docker Containers..."
-docker compose -f infra/docker-compose.yml down
+docker compose -f "$REPO_ROOT/infra/docker-compose.yml" down
 echo "  -> Đã hạ toàn bộ Infra (PostgreSQL, Kafka, Redis...)."
 
 echo ""
 echo "[3/4] Dọn dẹp các thư mục build (target/)..."
 # Chạy Maven clean để xoá toàn bộ thư mục target do Spring Boot sinh ra
-mvn clean -q
+(cd "$REPO_ROOT" && mvn clean -q)
 echo "  -> Đã xóa sạch thư mục 'target/' ở tất cả microservices."
 
 echo ""

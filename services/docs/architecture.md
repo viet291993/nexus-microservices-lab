@@ -42,5 +42,8 @@ Tài liệu này mô tả chi tiết kiến trúc chuyên sâu của hệ sinh t
 - Nâng cấp `InventoryResponseConsumer`: Nhận phản hồi Saga → tìm đơn trong DB → cập nhật CONFIRMED hoặc CANCELLED (Compensating Transaction / Rollback).
 - Thêm `GET /api/v1/orders` để kiểm tra trạng thái đơn hàng sau khi Saga chạy xong.
 
-### 🔲 Bước 4b: CQRS Pattern — ĐANG CHỜ
-- Triển khai luồng đọc dữ liệu từ một cơ sở dữ liệu riêng (Elasticsearch/Redis).
+### ✅ Bước 4b: CQRS Pattern — HOÀN THÀNH
+- Luồng đọc dữ liệu từ Elasticsearch đã được triển khai hoàn chỉnh.
+- Sử dụng `OrderDocument` để mapping sang Elasticsearch Index.
+- Tự động đồng bộ từ PostgreSQL sang Elasticsearch qua Kafka Event.
+- Cung cấp Search API hỗ trợ ES|QL nâng cao.

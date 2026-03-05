@@ -1,0 +1,10 @@
+Refactor: Finalize CodeRabbit feedback for PR #17
+
+- Sync Spring Cloud version to 2025.1.1 across modules.
+- Simplify Iterable to List conversion in OrderQueryController using StreamSupport.
+- Document ES|QL search API in Order Service README.
+- Add distributionSha256Sum to all maven-wrapper.properties for security.
+- Improve Inventory Service Eureka registration with port validation.
+- Implement readiness endpoint in Inventory Service HealthController.
+- Refactor cleanup script to be CWD-independent and use graceful shutdown.
+- Clean up redundant .gitignore rules in Order Service.

@@ -1,6 +1,7 @@
 package com.nexus.orderservice.controller;
 
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,9 +55,8 @@ public class OrderQueryController {
         } else if (productId != null) {
             results = searchRepository.findByProductId(productId);
         } else {
-            Iterable<OrderDocument> all = searchRepository.findAll();
-            results = new java.util.ArrayList<>();
-            all.forEach(results::add);
+            results = StreamSupport.stream(searchRepository.findAll().spliterator(), false)
+                    .toList();
         }
 
         return ResponseEntity.ok(results);

@@ -16,10 +16,10 @@ Tài liệu này dùng để theo dõi các bước thực hiện và ghi nhận
 ---
 
 ## Phase 2: Command Service (Viết và lưu giữ)
-- *(Chưa bắt đầu)*
+- **HOÀN THÀNH**: Database PostgreSQL đóng vai trò Source of Truth.
 
 ## Phase 3: Synchronization (Đồng bộ Eventual Consistency bằng Kafka)
-- *(Chưa bắt đầu)*
+- **HOÀN THÀNH**: Sử dụng Kafka CDC và `OrderSyncEventListener` để đồng bộ dữ liệu sang Elasticsearch.
 
 ## Phase 4: Query Service (Đọc từ Elasticsearch)
-- *(Chưa bắt đầu)*
+- **HOÀN THÀNH**: API `OrderQueryController` cung cấp khả năng tìm kiếm nâng cao qua Elasticsearch và ES|QL.

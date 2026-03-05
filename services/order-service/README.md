@@ -56,10 +56,18 @@ curl -X POST http://localhost:8082/api/v1/orders \
 
 ### 5. Tìm kiếm đơn hàng (Search API - CQRS)
 Dịch vụ cung cấp API tìm kiếm siêu tốc qua Elasticsearch nhờ cơ chế CQRS.
+
+**Tìm kiếm cơ bản (Repository Query):**
 Bạn có thể tìm kiếm theo `orderId`, `status`, và `productId`:
 ```bash
 # Tìm kiếm theo trạng thái và mã sản phẩm
 curl -X GET "http://localhost:8082/api/v1/orders/query/search?status=CONFIRMED&productId=PROD-001"
+```
+
+**Tìm kiếm nâng cao (ES|QL Query):**
+Sử dụng ngôn ngữ truy vấn ES|QL của Elasticsearch:
+```bash
+curl -X GET "http://localhost:8082/api/v1/orders/query/search-esql?query=FROM%20orders%20|%20LIMIT%205"
 ```
 
 ---
