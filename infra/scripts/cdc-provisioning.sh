@@ -19,7 +19,7 @@ register_connector() {
     echo "⚠️ Connector $NAME đã tồn tại, bỏ qua đăng ký mới."
   else
     echo "🚀 Đang đăng ký Connector: $NAME..."
-    RESPONSE=$(curl -s -w "%{http_code}" -X POST -H "Content-Type: application/json" --data @"$FILE" http://kafka-connect:8083/connectors)
+    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" --data @"$FILE" http://kafka-connect:8083/connectors)
     if [ "$RESPONSE" -eq 201 ]; then
       echo "✅ Đăng ký $NAME thành công."
     else

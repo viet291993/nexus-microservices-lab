@@ -1,4 +1,4 @@
-version: '3.8' # Phiên bản cú pháp Docker Compose. 3.8 là chuẩn phổ biến và ổn định hiện nay.
+# version: '3.8' # Phiên bản cú pháp Docker Compose. 3.8 là chuẩn phổ biến và ổn định hiện nay.
 
 services:
   # ==========================================
@@ -91,7 +91,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      CLUSTER_ID: 'MkU3O98UT7y9SthJ1Y/N7g=='
+      CLUSTER_ID: '4L69Hxv9QXS-9s3X_9vS1g'
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
       interval: 10s
@@ -135,7 +135,7 @@ services:
     ports:
       - "9200:9200"
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -s http://127.0.0.1:9200 >/dev/null || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -164,7 +164,7 @@ services:
   # ==========================================
   # Mục đích: Chạy các Connector (Debezium Source, ES Sink) để đồng bộ dữ liệu tự động.
   kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.6.0
+    image: confluentinc/cp-kafka-connect:7.7.0
     container_name: nexus-kafka-connect
     ports:
       - "8083:8083"
@@ -200,8 +200,8 @@ services:
       postgres:
         condition: service_started
       elasticsearch:
-        condition: service_healthy
-    mem_limit: 600mb
+        condition: service_started
+    mem_limit: 1024mb
     restart: unless-stopped
 
   # ==========================================
