@@ -75,8 +75,8 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 
 ### Phase 4: Observability — 20%
 
-- [ ] **Centralized Logging (ELK):** Đẩy log tập trung về Kibana qua Logstash.
-- [ ] **Distributed Tracing:** Tích hợp Zipkin/Tempo để theo dõi hành trình request (correlation_id).
+- [x] **Centralized Logging (ELK):** Đẩy log tập trung về Kibana qua Logstash.
+- [x] **Distributed Tracing:** Tích hợp Zipkin/Tempo để theo dõi hành trình request (correlation_id).
 - [ ] **Metrics & Monitoring:** Thiết lập **Grafana Dashboard** mẫu (Prometheus) để quan sát CPU, RAM, Kafka Lag và throughput thực tế.
 
 ### Phase 5: CI/CD & Automation — 50%

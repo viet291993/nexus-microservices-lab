@@ -1,0 +1,16 @@
+# Cấu hình chung cho TOÀN BỘ Microservices trong hệ thống Nexus
+management:
+    endpoints:
+        web:
+            exposure:
+                include: "health,info,prometheus,metrics" # Mở các endpoint quan trọng
+    endpoint:
+        health:
+            show-details: always
+    metrics:
+        tags:
+            application: ${spring.application.name} # Gắn tag tên ứng dụng vào mọi metrics
+
+logging:
+    pattern:
+        level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]" # Hiển thị TraceID/SpanID trong log Console
