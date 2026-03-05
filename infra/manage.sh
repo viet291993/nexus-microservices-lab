@@ -35,15 +35,21 @@ case "$1" in
     docker-compose -f $COMPOSE_FILE ps
     ;;
   clean)
-    echo -e "⚠️ CẢNH BÁO: Xóa toàn bộ Container và DỮ LIỆU (Volumes)!"
+    echo -e "⚠️ CẢNH BÁO: Xóa toàn bộ Container và DỮ LIỆU (Volumes) của project!"
     read -p "Bạn có chắc chắn muốn tiếp tục? (y/N) " confirm
     if [ "$confirm" == "y" ]; then
       docker-compose -f $COMPOSE_FILE down -v
-      echo "🧹 Đã dọn dẹp sạch sẽ tài nguyên."
+      echo "🧹 Đã dọn dẹp xong tài nguyên của project."
+      echo -e "\n💡 Mẹo: Dùng './manage.sh prune' để xóa luôn các Volume rác khác."
     fi
     ;;
+  prune)
+    echo -e "🧹 Đang dọn dẹp TOÀN BỘ Volume thừa (Anonymous Volumes)..."
+    docker volume prune -f
+    echo "✅ Đã dọn dẹp sạch sẽ các Volume thừa."
+    ;;
   *)
-    echo "Sử dụng: $0 {start|stop|restart|logs|status|clean}"
+    echo "Sử dụng: $0 {start|stop|restart|logs|status|clean|prune}"
     ;;
 esac
 

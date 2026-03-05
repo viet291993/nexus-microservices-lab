@@ -6,7 +6,7 @@
 
 param (
     [Parameter(Mandatory=$true)]
-    [ValidateSet("start", "stop", "restart", "logs", "status", "clean")]
+    [ValidateSet("start", "stop", "restart", "logs", "status", "clean", "prune")]
     $Action,
 
     [Parameter(Mandatory=$false)]
@@ -53,12 +53,20 @@ switch ($Action) {
     }
 
     "clean" {
-        Write-Host "⚠️ CẢNH BÁO: Thao tác này sẽ xóa toàn bộ Container và DỮ LIỆU (Volumes)!" -ForegroundColor Red
+        Write-Host "⚠️ CẢNH BÁO: Thao tác này sẽ xóa toàn bộ Container và DỮ LIỆU (Volumes) của project!" -ForegroundColor Red
         $confirmation = Read-Host "Bạn có chắc chắn muốn tiếp tục? (y/N)"
         if ($confirmation -eq 'y') {
             docker-compose -f $ComposeFile down -v
-            Write-Host "🧹 Đã dọn dẹp sạch sẽ tài nguyên." -ForegroundColor Green
+            Write-Host "🧹 Đã dọn dẹp xong tài nguyên của project." -ForegroundColor Green
+            
+            Write-Host "`n💡 Mẹo: Dùng '.\manage.ps1 prune' để xóa luôn các Volume rác khác (Anonymous Volumes)." -ForegroundColor Gray
         }
+    }
+
+    "prune" {
+        Write-Host "🧹 Đang dọn dẹp TOÀN BỘ Volume thừa (Anonymous Volumes) không sử dụng trong hệ thống..." -ForegroundColor Yellow
+        docker volume prune -f
+        Write-Host "✅ Đã dọn dẹp sạch sẽ các Volume thừa." -ForegroundColor Green
     }
 }
 
