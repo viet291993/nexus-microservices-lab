@@ -4,6 +4,9 @@ spring:
   config:
     import: "configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
   cloud:
+    config:
+      username: nexus_admin
+      password: ${CONFIG_SERVER_PASSWORD:nexus_secret}
     function:
       definition: process-inventory-response
     stream:

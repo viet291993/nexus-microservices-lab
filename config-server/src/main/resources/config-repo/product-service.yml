@@ -1,0 +1,27 @@
+server:
+  port: 8083
+
+spring:
+  # CẤU HÌNH DATABASE (MongoDB)
+  data:
+    mongodb:
+      uri: ${MONGO_URL:mongodb://root:rootpassword@localhost:27017/nexus_db?authSource=admin}
+    
+    # CẤU HÌNH REDIS
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# CẤU HÌNH SERVICE DISCOVERY (EUREKA)
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh

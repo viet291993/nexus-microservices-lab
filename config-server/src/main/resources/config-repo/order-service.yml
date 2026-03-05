@@ -12,7 +12,7 @@ spring:
 
   # CẤU HÌNH KAFKA MESSAGE BROKER (Saga Pattern)
   kafka:
-    bootstrap-servers: localhost:9092 # Trỏ tay tới địa chỉ broker Kafka.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092} # Trỏ tay tới địa chỉ broker Kafka.
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -24,6 +24,29 @@ spring:
       properties:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.trusted.packages: "com.nexus.orderservice"
+
+  # CẤU HÌNH SPRING CLOUD STREAM (Reliability - Phase 3)
+  cloud:
+    stream:
+      kafka:
+        bindings:
+          # Cấu hình DLQ cho Consumer nhận phản hồi từ Kho
+          process-inventory-response-in-0:
+            consumer:
+              enable-dlq: true # BẬT CHẾ ĐỘ CÁCH LY TIN NHẮN LỖI (DLQ)
+              dlq-name: inventory-events-topic.dlq # Tên Topic chứa tin nhắn chết
+              dlq-partitions: 1
+        binder:
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      
+      # Chiến lược Retry (Cố gắng thử lại trước khi đẩy vào DLQ)
+      bindings:
+        process-inventory-response-in-0:
+          consumer:
+            max-attempts: 3 # Thử lại tối đa 3 lần
+            back-off-initial-interval: 1000 # Lần 1: 1 giây
+            back-off-multiplier: 2.0 # Lũy thừa thời gian (Lần 2: 2s, Lần 3: 4s)
+            back-off-max-interval: 10000 # Không quá 10 giây
 
 # CẤU HÌNH SERVICE DISCOVERY (EUREKA)
 eureka:

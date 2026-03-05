@@ -8,3 +8,7 @@ spring:
   config:
     # Điểm đến nạp cấu hình sống (URL Config Server). Nếu không tìm thấy máy chủ 8888, gateway sẽ bỏ qua (nhờ chữ optional:)
     import: "optional:configserver:http://localhost:8888/"
+  cloud:
+    config:
+      username: nexus_admin
+      password: ${CONFIG_SERVER_PASSWORD:nexus_secret}

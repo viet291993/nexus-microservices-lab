@@ -18,7 +18,8 @@
 
 ## 🛠️ Tech Stack
 
-* **Core:** Java (Spring Boot), NodeJS (NestJS), Python (FastAPI).
+* **Core:** Java (Spring Boot), NodeJS (NestJS).
+* **Business Services:** Order (Java), Inventory (NestJS), Product (Java/Redis).
 * **Infra:** Docker, Docker-Compose, GitHub Actions.
 * **Storage:** Redis (Cache), SQL & NoSQL.
 * **Observability:** ELK Stack, Prometheus & Grafana.
@@ -64,10 +65,11 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 - [x] **CQRS Pattern:** Tách biệt Write (JPA) và Read (Elasticsearch + ES|QL).
 - [x] **Idempotency Consumer:** Đảm bảo không xử lý lặp sự kiện trong Kafka.
 
-### Phase 3: Reliability & Performance — 60%
+### Phase 3: Reliability & Performance — 100%
 - [x] **Resilience4j Integration:** Circuit Breaker & Retry cho REST communication.
-- [ ] **Dead Letter Queue (DLQ):** Triển khai cơ chế cách ly tin nhắn lỗi trên Kafka để tránh treo hệ thống.
-- [ ] **Distributed Caching:** Redis Cache Aside pattern cho Product catalog.
+- [x] **Dead Letter Queue (DLQ):** Triển khai cơ chế cách ly tin nhắn lỗi trên Kafka để tránh treo hệ thống.
+- [x] **Security & Secrets Management:** Mã hóa thông tin nhạy cảm và bảo mật Config Server (Issue #13).
+- [x] **Distributed Caching:** Redis Cache Aside pattern cho Product catalog (tại `product-service`).
 - [x] **Rate Limiting:** Gateway side protection.
 
 ### Phase 4: Observability — 20%
@@ -75,9 +77,9 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 - [ ] **Distributed Tracing:** Tích hợp Zipkin/Tempo để theo dõi hành trình request (correlation_id).
 - [ ] **Metrics & Monitoring:** Thiết lập **Grafana Dashboard** mẫu (Prometheus) để quan sát CPU, RAM, Kafka Lag và throughput thực tế.
 
-### Phase 5: CI/CD & Automation
+### Phase 5: CI/CD & Automation — 50%
 - [ ] **GitHub Actions:** Tự động hóa quy trình test và build images.
-- [ ] **Infrastructure as Code:** Viết script thiết lập nhanh môi trường.
+- [x] **Infrastructure as Code:** Bộ script `manage.ps1`/`manage.sh` giúp khởi tạo toàn bộ Lab chỉ với 1 câu lệnh.
 
 ---
 

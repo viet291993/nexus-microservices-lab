@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: product-service
+  config:
+    import: "configserver:${CONFIG_SERVER_URL:http://localhost:8888/}"
+  cloud:
+    config:
+      username: nexus_admin
+      password: ${CONFIG_SERVER_PASSWORD:nexus_secret}
+  
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # 10 minutes
+      cache-null-values: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
