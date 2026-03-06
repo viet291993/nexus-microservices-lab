@@ -17,6 +17,9 @@ public class OrderSyncEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(OrderSyncEventListener.class);
 
+    private static final int MAX_ATTEMPTS = 3;
+    private static final long RETRY_DELAY_MS = 1000L;
+
     private final OrderSearchRepository searchRepository;
 
     public OrderSyncEventListener(OrderSearchRepository searchRepository) {
@@ -26,31 +29,44 @@ public class OrderSyncEventListener {
     /**
      * Lắng nghe các sự kiện đồng bộ từ Command-side (Luồng ghi)
      * và cập nhật ngay lập tức vào Elasticsearch (Read-side).
-     * Đây chính là cơ chế Eventual Consistency cho CQRS.
+     * Retry tối đa 3 lần; sau đó log và bỏ qua (DLQ-style: ghi log để xử lý thủ công nếu cần).
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderSyncEvent(OrderSyncEvent event) {
-        try {
-            String orderId = event.getOrderId();
-            OrderStatus newStatus = event.getStatus();
+        String orderId = event.getOrderId();
+        OrderStatus newStatus = event.getStatus();
+        log.info("🔄 [CQRS SYNC] Nhận event đồng bộ Order {} (Status: {})", orderId, newStatus);
 
-            log.info("🔄 [CQRS SYNC] Nhận event đồng bộ Order {} (Status: {})", orderId, newStatus);
-
-            // Kiểm tra Idempotency: Không ghi đè trạng thái cuối (CONFIRMED/CANCELLED) bằng PENDING
-            searchRepository.findById(orderId).ifPresentOrElse(existingDoc -> {
-                if (isFinalStatus(existingDoc.getStatus())) {
-                    if (!existingDoc.getStatus().equalsIgnoreCase(newStatus.name())) {
-                        log.warn("♻️ [CQRS IDEMPOTENT] Bỏ qua cập nhật {} cho Order {} vì đã ở trạng thái cuối: {}",
-                                newStatus, orderId, existingDoc.getStatus());
+        Exception lastException = null;
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+                searchRepository.findById(orderId).ifPresentOrElse(existingDoc -> {
+                    if (isFinalStatus(existingDoc.getStatus())) {
+                        if (!existingDoc.getStatus().equalsIgnoreCase(newStatus.name())) {
+                            log.warn("♻️ [CQRS IDEMPOTENT] Bỏ qua cập nhật {} cho Order {} vì đã ở trạng thái cuối: {}",
+                                    newStatus, orderId, existingDoc.getStatus());
+                        }
+                        return;
                     }
-                    return;
+                    updateDocument(event);
+                }, () -> updateDocument(event));
+                return;
+            } catch (Exception ex) {
+                lastException = ex;
+                log.warn("❌ [CQRS SYNC] Lần {} thất bại cho Order {}: {}", attempt, orderId, ex.getMessage());
+                if (attempt < MAX_ATTEMPTS) {
+                    try {
+                        Thread.sleep(RETRY_DELAY_MS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        log.error("❌ [CQRS SYNC] Retry bị gián đoạn cho Order {}", orderId, ie);
+                        return;
+                    }
                 }
-                updateDocument(event);
-            }, () -> updateDocument(event));
-        } catch (Exception ex) {
-            log.error("❌ [CQRS SYNC ERROR] Lỗi khi xử lý OrderSyncEvent: {}", event, ex);
+            }
         }
+        log.error("❌ [CQRS SYNC ERROR] Đã thử {} lần vẫn lỗi, bỏ qua (có thể xử lý lại từ nguồn khác): orderId={}", MAX_ATTEMPTS, orderId, lastException);
     }
 
     private void updateDocument(OrderSyncEvent event) {

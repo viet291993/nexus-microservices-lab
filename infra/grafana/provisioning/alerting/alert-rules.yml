@@ -95,6 +95,6 @@ groups:
                   reducer:
                     type: "last"
         annotations:
-          summary: "DLQ đang tăng nhanh (topic {{ $labels.topic }})"
+          summary: "DLQ messages are rapidly increasing (topic {{ $labels.topic }})"
         labels:
           severity: warning

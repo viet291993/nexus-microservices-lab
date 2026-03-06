@@ -16,4 +16,3 @@ groups:
         annotations:
           summary: "Kafka DLQ đang tăng nhanh (topic={{ $labels.topic }})"
           description: "DLQ có tăng > 100 messages/15m trong 10 phút liên tiếp. Kiểm tra Kafka Connect / consumer và nội dung DLQ."
-

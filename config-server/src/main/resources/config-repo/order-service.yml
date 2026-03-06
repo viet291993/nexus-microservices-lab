@@ -6,7 +6,7 @@ spring:
   datasource:
     url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/nexus_db} # Trỏ tới Data container được dựng bởi docker-compose
     username: ${POSTGRES_USER:nexus_user}
-    password: ${POSTGRES_PASSWORD}
+    password: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
   jpa:
     show-sql: true # Log script SQL SQL/Query ra màn hình để dễ bắt bug lúc code.
     hibernate:

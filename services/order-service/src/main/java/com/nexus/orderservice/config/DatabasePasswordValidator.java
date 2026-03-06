@@ -20,10 +20,10 @@ public class DatabasePasswordValidator {
         boolean isDevProfile = Arrays.stream(environment.getActiveProfiles())
                 .anyMatch(p -> p.equalsIgnoreCase("dev") || p.equalsIgnoreCase("test"));
 
-        String rawPassword = environment.getProperty("POSTGRES_PASSWORD");
+        String rawPassword = environment.getProperty("spring.datasource.password");
 
         if (!isDevProfile && (rawPassword == null || rawPassword.isBlank() || "nexus_password".equals(rawPassword))) {
-            throw new IllegalStateException("Security risk: POSTGRES_PASSWORD must be set to a non-default value in non-dev profiles.");
+            throw new IllegalStateException("Security risk: spring.datasource.password must be set to a non-default value in non-dev profiles.");
         }
     }
 }

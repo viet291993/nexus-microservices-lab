@@ -11,11 +11,10 @@ import java.util.Arrays;
 
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(exclude = "password")
 @ConfigurationProperties(prefix = "spring.security.user")
 public class SecurityProperties {
 
-    @EqualsAndHashCode.Include
     private String password;
 
     private final Environment environment;

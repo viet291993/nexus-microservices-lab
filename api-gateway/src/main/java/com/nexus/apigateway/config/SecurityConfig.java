@@ -2,28 +2,42 @@ package com.nexus.apigateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
+    private final Environment environment;
+
+    public SecurityConfig(Environment environment) {
+        this.environment = environment;
+    }
+
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+        boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+
         http
                 .cors(org.springframework.security.config.Customizer.withDefaults())
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/eureka/**").permitAll() // Cho phép truy cập Eureka dashboard (nếu cần)
-                        .pathMatchers("/fallback/**").permitAll() // Cho phép truy cập các route Fallback
-                                                                  // (CircuitBreaker)
-                        // Health, Info, Prometheus: permitAll cho lab (Prometheus scrape không gửi credentials).
-                        // Production: bật auth hoặc whitelist IP Prometheus.
-                        .pathMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
-                        .anyExchange().authenticated() // Mọi request khác nhắm vào backend đều phải có lệnh Token JWT
-                )
+                .authorizeExchange(exchanges -> {
+                    exchanges
+                            .pathMatchers("/eureka/**").permitAll()
+                            .pathMatchers("/fallback/**").permitAll()
+                            .pathMatchers("/actuator/health", "/actuator/info").permitAll();
+                    if (isProd) {
+                        exchanges.pathMatchers("/actuator/prometheus").authenticated();
+                    } else {
+                        exchanges.pathMatchers("/actuator/prometheus").permitAll();
+                    }
+                    exchanges.anyExchange().authenticated();
+                })
                 // Kích hoạt cấu hình Gateway trở thành OAuth2 Resource Server
                 // Tự động giải mã chuỗi Bearer JWT Token bằng bộ Public key lấy từ Keycloak
                 // Issuer URL

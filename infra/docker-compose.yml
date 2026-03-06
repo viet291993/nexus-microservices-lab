@@ -14,7 +14,7 @@ services:
     ports:
       - "5432:5432" # Map port: [Port ở máy thật (để dùng DBeaver kết nối)] : [Port nội bộ của container]
     environment:
-      POSTGRES_USER: nexus_user # User mặc định được tạo khi DB khởi chạy lần đầu.
+      POSTGRES_USER: ${POSTGRES_USER:-nexus_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required} # Password (sẽ dùng để config trong Spring Boot/NestJS).
       POSTGRES_DB: nexus_db # Tên database tự động được tạo sẵn.
     volumes:
@@ -121,7 +121,7 @@ services:
   kafka-exporter:
     image: danielqsj/kafka-exporter:v1.7.0
     container_name: nexus-kafka-exporter
-    command: [ "--kafka.server=kafka:9092" ]
+    command: ["--kafka.server=kafka:9092"]
     ports:
       - "9308:9308"
     depends_on:
@@ -202,6 +202,8 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy # Chờ Elasticsearch ổn định rồi mới khởi động UI.
+      elk-provisioner:
+        condition: service_completed_successfully # Chờ set password kibana_system xong.
     networks:
       - nexus-net
     mem_limit: 700mb # Đủ dùng cho môi trường dev, tiết kiệm ~300MB so với mặc định.
@@ -320,6 +322,8 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy # Chờ ES sẵn sàng hoàn toàn để tránh lỗi Pipeline khi khởi động.
+      elk-provisioner:
+        condition: service_completed_successfully # Chờ tạo user logstash_writer xong.
     networks:
       - nexus-net
     mem_limit: 512mb
@@ -352,7 +356,8 @@ services:
     ports:
       - "9090:9090"
     extra_hosts:
-      - "host.docker.internal:host-gateway" # Quan trọng để Prometheus nhìn thấy apps trên host máy thật.
+      # host-gateway: Docker Desktop (Mac/Windows) và Docker >= 20.10 trên Linux. Linux cũ: dùng host network hoặc extra_hosts với IP host tĩnh.
+      - "host.docker.internal:host-gateway"
     networks:
       - nexus-net
     mem_limit: 256mb
