@@ -3,6 +3,7 @@
 # Wait for Elasticsearch to be ready
 echo "Waiting for Elasticsearch to be ready..."
 
+# curl_es wraps curl to call Elasticsearch; it adds HTTP basic auth using ELASTIC_PASSWORD when set and runs curl in silent mode.
 curl_es() {
   if [ -n "$ELASTIC_PASSWORD" ]; then
     curl -s -u "elastic:$ELASTIC_PASSWORD" "$@"

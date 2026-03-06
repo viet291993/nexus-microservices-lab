@@ -36,6 +36,13 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
         private final Counter orderConfirmedCounter;
         private final Counter orderCancelledCounter;
 
+        /**
+         * Create a new InventoryResponseConsumer and initialize its metrics.
+         *
+         * @param orderRepository repository for loading and persisting orders
+         * @param eventPublisher  application event publisher used to emit OrderSyncEvent events
+         * @param meterRegistry   MeterRegistry used to register Micrometer counters for confirmed and cancelled orders
+         */
         public InventoryResponseConsumer(OrderRepository orderRepository, ApplicationEventPublisher eventPublisher,
                         MeterRegistry meterRegistry) {
                 this.orderRepository = orderRepository;
@@ -49,8 +56,14 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
         }
 
         /**
-         * Hàm này được ZenWave Generated Controller gọi mỗi khi có message mới.
-         * Cực kỳ mạnh vì nó là Interface chuẩn (Type-safe).
+         * Handle inventory service responses to update order status, record metrics, and publish order sync events.
+         *
+         * Processes an InventoryResponsePayload and, based on its event type, updates the corresponding order's
+         * status to CONFIRMED or CANCELLED, increments the matching Micrometer counter, and publishes an OrderSyncEvent.
+         * The method performs idempotent checks: it skips processing when the order is already in the target status.
+         *
+         * @param payload the inventory response containing the event type, order ID, and optional message
+         * @param headers transport-level headers supplied by the consumer; provided by the generated controller
          */
         @Override
         public void processInventoryResponse(InventoryResponsePayload payload,

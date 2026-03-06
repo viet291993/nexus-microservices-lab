@@ -54,6 +54,10 @@ public class OrderController {
     private final ApplicationEventPublisher eventPublisher;
     private final Counter orderCreatedCounter;
 
+    /**
+     * Constructs an OrderController and registers the Micrometer Counter "order_created_total"
+     * used to track the number of orders created via the API.
+     */
     public OrderController(OrderProducerService producerService, OrderRepository orderRepository,
             ApplicationEventPublisher eventPublisher, MeterRegistry meterRegistry) {
         this.producerService = producerService;
@@ -65,13 +69,14 @@ public class OrderController {
     }
 
     /**
-     * API tạo đơn hàng mới.
+     * Create a new order and publish an ORDER_CREATED event for downstream processing.
      *
-     * Request Body mẫu (JSON):
-     * {
-     * "productId": "PRODUCT-001",
-     * "quantity": 5
-     * }
+     * The request should contain the product identifier and quantity. The method persists
+     * the order with status "PENDING", publishes a sync event, sends an ORDER_CREATED event
+     * to Kafka, and returns an immediate acknowledgment to the client.
+     *
+     * @param request the create order request containing `productId` and `quantity`
+     * @return a ResponseEntity with HTTP 202 (Accepted) whose body is JSON containing `orderId`, `status` ("PENDING"), and a human-readable `message`
      */
     @PostMapping
     @Transactional
