@@ -2,7 +2,9 @@ package com.nexus.configserver.config;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -10,12 +12,15 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.Arrays;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Configuration
 @ConfigurationProperties(prefix = "spring.security.user")
 @Validated
 public class SecurityProperties {
 
+    @EqualsAndHashCode.Include
     @NotBlank(message = "CONFIG_SERVER_PASSWORD must not be blank in production/staging profiles")
     private String password;
 

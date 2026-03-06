@@ -33,8 +33,10 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`⚠️ [EUREKA] Invalid EUREKA_PORT: ${eurekaPortRaw}. Falling back to 8761.`);
     }
 
-    const finalAppPort = isNaN(appPort) ? 8083 : appPort;
-    const finalEurekaPort = isNaN(eurekaPort) ? 8761 : eurekaPort;
+    const finalAppPort =
+      isNaN(appPort) || appPort < 1 || appPort > 65535 ? 8083 : appPort;
+    const finalEurekaPort =
+      isNaN(eurekaPort) || eurekaPort < 1 || eurekaPort > 65535 ? 8761 : eurekaPort;
 
     this.client = new Eureka({
       instance: {

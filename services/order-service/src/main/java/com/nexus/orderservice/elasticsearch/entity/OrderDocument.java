@@ -18,7 +18,7 @@ public class OrderDocument {
     private String productId;
 
     @Field(type = FieldType.Integer)
-    private int quantity;
+    private Integer quantity;
 
     @Field(type = FieldType.Keyword)
     private String status;
@@ -26,7 +26,7 @@ public class OrderDocument {
     public OrderDocument() {
     }
 
-    public OrderDocument(String orderId, String productId, int quantity, String status) {
+    public OrderDocument(String orderId, String productId, Integer quantity, String status) {
         this.id = orderId;
         this.orderId = orderId;
         this.productId = productId;
@@ -60,11 +60,11 @@ public class OrderDocument {
         this.productId = productId;
     }
 
-    public int getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 

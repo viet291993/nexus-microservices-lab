@@ -19,22 +19,26 @@ Tài liệu này chi tiết hóa kế hoạch triển khai mẫu thiết kế CQ
 ## 2. Kế hoạch triển khai (Tasks)
 
 ### Phase 1: Infrastructure & Configuration
+
 - [x] Cấu hình docker-compose để thêm Elasticsearch & Kibana.
 - [x] Thêm dependency `spring-boot-starter-data-elasticsearch`.
 - [x] Tạo `OrderDocument` (Document mapping sang Elasticsearch).
 - [x] Cấu hình Testcontainers hỗ trợ Elasticsearch 9.2.0.
 
 ### Phase 2: Command Service (Write)
+
 - [x] Giữ nguyên luồng Saga hiện có trên PostgreSQL.
 - [x] Đảm bảo PostgreSQL là **Source of Truth**.
 
 ### Phase 3: Synchronization (Eventual Consistency)
+
 - [x] Xây dựng `OrderSyncEventListener` (Read-side):
     - [x] Lắng nghe sự kiện `OrderSyncEvent` (tạo ra từ `OrderCreatedEvent`, v.v.).
     - [x] Cập nhật/chèn dữ liệu vào Elasticsearch Index.
 - [x] Xử lý Idempotency sâu: Kiểm tra trạng thái cuối để tránh ghi đè dữ liệu.
 
 ### Phase 4: Query Service (Read)
+
 - [x] Tạo `OrderQueryController`.
 - [x] Implement API `GET /api/v1/orders/query/search-esql` nâng cao.
 - [x] Hoàn tất Integration Test (SagaE2EIntegrationTest).

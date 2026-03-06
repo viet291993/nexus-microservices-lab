@@ -57,6 +57,7 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 ## 🚀 Research & Development Roadmap
 
 ### Phase 1: Foundation & Connectivity — 100%
+
 - [x] **Setup Infrastructure with Docker Compose:** Postgres, Redis, RabbitMQ, Kafka, MongoDB, Keycloak, ELK Stack.
 - [x] **API Gateway Implementation:** Spring Cloud Gateway, dynamic routing, rate limiting.
 - [x] **Service Discovery:** Netflix Eureka.
@@ -64,6 +65,7 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 - [x] **API Testing & UI:** Triển khai **Swagger/Postman Collection** để kích hoạt và kiểm thử các luồng (Low priority UI).
 
 ### Phase 2: Design Patterns & Consistency — 100%
+
 - [x] **Saga Pattern (Choreography):** Lưu đơn PENDING -> Phản hồi từ Kho -> Cập nhật trạng thái.
 - [x] **Database per Service:** PostgreSQL (Order) & MongoDB (Inventory).
 - [x] **CQRS Pattern:** Tách biệt Write (JPA) và Read (Elasticsearch + ES|QL).

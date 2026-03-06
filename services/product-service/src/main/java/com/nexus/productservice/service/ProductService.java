@@ -45,7 +45,8 @@ public class ProductService {
     @CacheEvict(value = "productList", allEntries = true)
     public Product updateProduct(String id, Product productDetails) {
         log.info("📝 [DB] Updating product in MongoDB: {}", id);
-        Product product = getProductById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found: " + id));
         product.setName(productDetails.getName());
         product.setDescription(productDetails.getDescription());
         product.setPrice(productDetails.getPrice());

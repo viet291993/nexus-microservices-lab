@@ -34,6 +34,7 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
 
         private final OrderRepository orderRepository;
         private final ApplicationEventPublisher eventPublisher;
+        private final MeterRegistry meterRegistry;
         private final Counter orderConfirmedCounter;
         private final Counter orderCancelledCounter;
 
@@ -50,6 +51,7 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
                         MeterRegistry meterRegistry) {
                 this.orderRepository = orderRepository;
                 this.eventPublisher = eventPublisher;
+                this.meterRegistry = meterRegistry;
                 this.orderConfirmedCounter = Counter.builder("order_confirmed_total")
                                 .description("Total number of orders successfully confirmed by inventory")
                                 .register(meterRegistry);
@@ -128,6 +130,11 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
                                         new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(),
                                                         OrderStatus.CANCELLED));
                 } else {
+                        Counter unknownEventCounter = Counter.builder("inventory_unknown_event_type_total")
+                                        .description("Total number of inventory responses with unknown eventType")
+                                        .tag("eventType", eventType != null ? eventType.name() : "null")
+                                        .register(meterRegistry);
+                        unknownEventCounter.increment();
                         log.warn("❓ [CONSUMER] Nhận được InventoryEventType không xác định: {}", eventType);
                 }
         }

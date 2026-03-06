@@ -111,7 +111,7 @@ public abstract class BaseSagaIntegrationTest {
         }
 
         if (mongodb != null && mongodb.isRunning()) {
-            registry.add("spring.data.mongodb.uri", mongodb::getReplicaSetUrl);
+            registry.add("spring.data.mongodb.uri", mongodb::getConnectionString);
         } else {
             log.info("🔗 [E2E] Connecting to host MongoDB at localhost:27017");
             registry.add("spring.data.mongodb.uri", () -> "mongodb://localhost:27017/nexus_db");

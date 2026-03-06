@@ -13,7 +13,7 @@ param (
     $Service = ""
 )
 
-$ComposeFile = "docker-compose.yml"
+$ComposeFile = Join-Path $PSScriptRoot "docker-compose.yml"
 
 Write-Host "`n--- [ Nexus Lab Manager ] ---" -ForegroundColor Cyan
 

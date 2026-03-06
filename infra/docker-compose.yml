@@ -9,7 +9,8 @@ services:
   postgres:
     image: postgres:15-alpine # Dùng bản Alpine siêu nhẹ, tiết kiệm RAM cho máy tính.
     container_name: nexus-postgres # Đặt tên container cố định để dễ nhìn khi gõ lệnh 'docker ps'.
-    command: [ "postgres", "-c", "wal_level=logical" ] # BẬT CDC: Bắt buộc để Debezium đọc được log vật lý (WAL).
+    # BẬT CDC: Bắt buộc để Debezium đọc được log vật lý (WAL).
+    command: [ "postgres", "-c", "wal_level=logical" ]
     ports:
       - "5432:5432" # Map port: [Port ở máy thật (để dùng DBeaver kết nối)] : [Port nội bộ của container]
     environment:
@@ -259,8 +260,8 @@ services:
     image: curlimages/curl:8.7.1 # Pin version cố định tránh breaking change.
     container_name: nexus-cdc-provisioner
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-nexus_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nexus_password}
+      - POSTGRES_USER=${POSTGRES_USER:?POSTGRES_USER is required}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - DLQ_REPLICATION_FACTOR=${DLQ_REPLICATION_FACTOR:-1}
       - DLQ_TOLERANCE=${DLQ_TOLERANCE:-none}
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}

@@ -13,6 +13,11 @@ curl_es() {
   fi
 }
 
+if [ -z "$ELASTIC_PASSWORD" ]; then
+  echo "ERROR: ELASTIC_PASSWORD must be set when security is enabled on Elasticsearch."
+  exit 1
+fi
+
 MAX_RETRIES="${ELASTIC_WAIT_RETRIES:-60}"
 RETRY=0
 until curl_es http://elasticsearch:9200 > /dev/null; do

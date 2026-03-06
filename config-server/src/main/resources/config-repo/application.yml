@@ -6,7 +6,7 @@ management:
                 include: "health,info,prometheus,metrics" # Mở các endpoint quan trọng
     endpoint:
         health:
-            show-details: always
+            show-details: when_authorized
     metrics:
         tags:
             application: ${spring.application.name} # Gắn tag tên ứng dụng vào mọi metrics

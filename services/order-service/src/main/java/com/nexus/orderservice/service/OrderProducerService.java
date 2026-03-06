@@ -50,9 +50,11 @@ public class OrderProducerService {
         if (success) {
             log.info("✅ [PRODUCER] Successfully dispatched event for order: {}", event.getOrderId());
         } else {
-            log.error(
-                    "❌ [PRODUCER] Failed to dispatch event for order: {}. Check application logs and Kafka connectivity.",
+            String message = String.format(
+                    "Failed to dispatch event for order: %s. Producer returned false.",
                     event.getOrderId());
+            log.error("❌ [PRODUCER] {}", message);
+            throw new IllegalStateException(message);
         }
     }
 }

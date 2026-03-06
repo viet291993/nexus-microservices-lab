@@ -7,6 +7,15 @@
 echo "⏳ Đợi Connect sẵn sàng..."
 MAX_RETRIES=30
 RETRY=0
+TMP_FILE=""
+
+cleanup_tmp() {
+  if [ -n "$TMP_FILE" ] && [ -f "$TMP_FILE" ]; then
+    rm -f "$TMP_FILE"
+  fi
+}
+
+trap cleanup_tmp EXIT
 # Loop cho đến khi Kafka Connect REST API trả về 200
 until curl -s -f http://kafka-connect:8083/connectors > /dev/null; do
   RETRY=$((RETRY + 1))
@@ -36,6 +45,7 @@ register_connector() {
          s|\${ELASTIC_PASSWORD}|$ELASTIC_PASSWORD|g" "$FILE" > "$TMP_FILE"
     
     RESPONSE=$(curl -s -w "%{http_code}" -X POST -H "Content-Type: application/json" --data @"$TMP_FILE" http://kafka-connect:8083/connectors)
+    rm -f "$TMP_FILE"
     HTTP_CODE=${RESPONSE: -3}
     BODY=${RESPONSE%$HTTP_CODE}
     if [ "$HTTP_CODE" -eq 201 ] || [ "$HTTP_CODE" -eq 200 ]; then

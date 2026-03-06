@@ -58,6 +58,7 @@ Cấp quyền thực thi lần đầu: `chmod +x manage.sh`, sau đó sử dụn
 
 
 ## 🛠️ Lưu ý về Tài nguyên (Optimization)
+
 Hệ thống đã được cấu hình **Resource Limits** (Giới hạn RAM) cho từng Container để đảm bảo Lab có thể chạy mượt mà trên máy cá nhân có RAM từ 16GB trở lên. 
 
 Nếu máy bạn bị giật lag, hãy dùng lệnh `status` để kiểm tra container nào đang chiếm dụng nhiều tài nguyên nhất.

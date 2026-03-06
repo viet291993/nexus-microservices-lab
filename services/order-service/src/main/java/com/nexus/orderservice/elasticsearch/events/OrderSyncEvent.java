@@ -37,4 +37,15 @@ public class OrderSyncEvent extends ApplicationEvent {
     public OrderStatus getStatus() {
         return status;
     }
+
+    @Override
+    public String toString() {
+        return "OrderSyncEvent{" +
+                "orderId='" + orderId + '\'' +
+                ", productId='" + productId + '\'' +
+                ", quantity=" + quantity +
+                ", status=" + status +
+                ", source=" + getSource() +
+                '}';
+    }
 }

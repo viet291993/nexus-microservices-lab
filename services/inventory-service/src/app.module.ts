@@ -29,7 +29,7 @@ import { InventoryModule } from './inventory/inventory.module';
       useFactory: (config: ConfigService) => ({
         uri: config.get<string>(
           'MONGODB_URI',
-          'mongodb://root:rootpassword@localhost:27017/nexus_inventory?authSource=admin',
+          'mongodb://root:rootpassword@localhost:27017/nexus_inventory?authSource=nexus_inventory',
         ),
       }),
     }),

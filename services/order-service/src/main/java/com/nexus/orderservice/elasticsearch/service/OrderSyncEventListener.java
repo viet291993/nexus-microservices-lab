@@ -31,25 +31,26 @@ public class OrderSyncEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderSyncEvent(OrderSyncEvent event) {
-        String orderId = event.getOrderId();
-        OrderStatus newStatus = event.getStatus();
+        try {
+            String orderId = event.getOrderId();
+            OrderStatus newStatus = event.getStatus();
 
-        log.info("🔄 [CQRS SYNC] Nhận event đồng bộ Order {} (Status: {})", orderId, newStatus);
+            log.info("🔄 [CQRS SYNC] Nhận event đồng bộ Order {} (Status: {})", orderId, newStatus);
 
-        // Kiểm tra Idempotency: Không ghi đè trạng thái cuối (CONFIRMED/CANCELLED) bằng
-        // PENDING
-        searchRepository.findById(orderId).ifPresentOrElse(existingDoc -> {
-            if (isFinalStatus(existingDoc.getStatus())) {
-                if (!existingDoc.getStatus().equalsIgnoreCase(newStatus.name())) {
-                    log.warn("♻️ [CQRS IDEMPOTENT] Bỏ qua cập nhật {} cho Order {} vì đã ở trạng thái cuối: {}",
-                            newStatus, orderId, existingDoc.getStatus());
+            // Kiểm tra Idempotency: Không ghi đè trạng thái cuối (CONFIRMED/CANCELLED) bằng PENDING
+            searchRepository.findById(orderId).ifPresentOrElse(existingDoc -> {
+                if (isFinalStatus(existingDoc.getStatus())) {
+                    if (!existingDoc.getStatus().equalsIgnoreCase(newStatus.name())) {
+                        log.warn("♻️ [CQRS IDEMPOTENT] Bỏ qua cập nhật {} cho Order {} vì đã ở trạng thái cuối: {}",
+                                newStatus, orderId, existingDoc.getStatus());
+                    }
+                    return;
                 }
-                return;
-            }
-            updateDocument(event);
-        }, () -> {
-            updateDocument(event);
-        });
+                updateDocument(event);
+            }, () -> updateDocument(event));
+        } catch (Exception ex) {
+            log.error("❌ [CQRS SYNC ERROR] Lỗi khi xử lý OrderSyncEvent: {}", event, ex);
+        }
     }
 
     private void updateDocument(OrderSyncEvent event) {

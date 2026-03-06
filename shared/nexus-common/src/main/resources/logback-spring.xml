@@ -9,6 +9,10 @@
     <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
         <destination>${LOGSTASH_HOST}:${LOGSTASH_PORT}</destination>
         <queueSize>512</queueSize>
+        <reconnectionDelay>5000</reconnectionDelay>
+        <connectionTimeout>5000</connectionTimeout>
+        <writeTimeout>5000</writeTimeout>
+        <keepAliveDuration>60000</keepAliveDuration>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"service_name":"${spring.application.name:-unknown-service}"}</customFields>
         </encoder>

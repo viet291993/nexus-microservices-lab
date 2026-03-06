@@ -111,11 +111,14 @@ public class OrderEntity {
         if (o == null || getClass() != o.getClass())
             return false;
         OrderEntity that = (OrderEntity) o;
+        if (this.orderId == null || that.orderId == null) {
+            return false;
+        }
         return Objects.equals(orderId, that.orderId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(orderId);
+        return orderId == null ? System.identityHashCode(this) : Objects.hash(orderId);
     }
 }

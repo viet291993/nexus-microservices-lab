@@ -56,14 +56,17 @@ public class KafkaDLQIntegrationTest extends BaseSagaIntegrationTest {
 
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         Consumer<String, String> consumer = cf.createConsumer();
-        consumer.subscribe(Collections.singleton("inventory-events-topic.dlq"));
+        try {
+            consumer.subscribe(Collections.singleton("inventory-events-topic.dlq"));
 
-        // 4. Đợi và kiểm tra xem message có xuất hiện trong DLQ không (sau 3 lần retry)
-        ConsumerRecord<String, String> received = KafkaTestUtils.getSingleRecord(consumer, "inventory-events-topic.dlq", Duration.ofSeconds(20));
+            // 4. Đợi và kiểm tra xem message có xuất hiện trong DLQ không (sau 3 lần retry)
+            ConsumerRecord<String, String> received = KafkaTestUtils.getSingleRecord(
+                    consumer, "inventory-events-topic.dlq", Duration.ofSeconds(20));
 
-        assertThat(received).isNotNull();
-        assertThat(received.value()).contains(orderId);
-        
-        consumer.close();
+            assertThat(received).isNotNull();
+            assertThat(received.value()).contains(orderId);
+        } finally {
+            consumer.close();
+        }
     }
 }
