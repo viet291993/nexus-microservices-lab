@@ -5,9 +5,16 @@
 # ==========================================
 
 echo "⏳ Đợi Connect sẵn sàng..."
+MAX_RETRIES=30
+RETRY=0
 # Loop cho đến khi Kafka Connect REST API trả về 200
 until curl -s -f http://kafka-connect:8083/connectors > /dev/null; do
-  echo "Kafka Connect chưa sẵn sàng, đang đợi..."
+  RETRY=$((RETRY + 1))
+  if [ "$RETRY" -gt "$MAX_RETRIES" ]; then
+    echo "❌ Lỗi: Kafka Connect không sẵn sàng sau $((MAX_RETRIES * 5)) giây."
+    exit 1
+  fi
+  echo "Kafka Connect chưa sẵn sàng (Lần $RETRY/$MAX_RETRIES), đang đợi..."
   sleep 5
 done
 
@@ -31,4 +38,4 @@ register_connector() {
 register_connector "postgres-source" "/connectors/postgres-source.json"
 register_connector "elasticsearch-sink" "/connectors/elasticsearch-sink.json"
 
-echo -e "\n✅ CDC Provisioning hoàn tất!"
+printf "\n✅ CDC Provisioning hoàn tất!\n"

@@ -157,7 +157,7 @@ services:
   # ==========================================
   # Mục đích: Làm Query database cho cơ chế CQRS, lưu trữ và tìm kiếm đơn hàng tốc độ cao.
   elasticsearch:
-    image: elasticsearch:8.17.4 # Chuyển về Official Image của Elastic.
+    image: elasticsearch:9.2.0 # Chuyển lên 9.2.0 để khớp Java Client trong Spring Boot 4.x
     container_name: nexus-elasticsearch
     environment:
       - discovery.type=single-node
@@ -185,7 +185,7 @@ services:
   # ==========================================
   # Mục đích: Giao diện UI để trực quan hóa dữ liệu và giám sát log thu thập được từ ELK Stack.
   kibana:
-    image: kibana:8.17.4 # Chuyển về Official Image.
+    image: kibana:9.2.0
     container_name: nexus-kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
@@ -279,7 +279,8 @@ services:
     container_name: nexus-elk-provisioner
     environment:
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
-      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD:?KIBANA_PASSWORD is required}
+      - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD is required}
     volumes:
       - ./scripts/elk-provisioning.sh:/elk-provisioning.sh
     depends_on:
@@ -296,7 +297,7 @@ services:
   # ==========================================
   # Mục đích: Thu thập, lọc và chuyển đổi logs từ các service gửi về Elasticsearch.
   logstash:
-    image: logstash:8.17.4 # Chuyển về Official Image.
+    image: logstash:9.2.0
     container_name: nexus-logstash
     volumes:
       - ./logstash/config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
@@ -304,7 +305,7 @@ services:
       - "50000:50000/tcp"
       - "50000:50000/udp"
     environment:
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required} # Mật khẩu để gửi log sang Elasticsearch.
+      - ELASTIC_PASSWORD=${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD is required} # Dùng password của logstash_writer
       - LS_JAVA_OPTS=-Xms256m -Xmx256m # Giới hạn heap RAM cho Logstash.
     depends_on:
       elasticsearch:

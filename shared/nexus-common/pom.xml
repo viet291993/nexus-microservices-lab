@@ -21,9 +21,4 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <!-- No need for spring-boot-maven-plugin because this is just a library -->
-        </plugins>
-    </build>
 </project>

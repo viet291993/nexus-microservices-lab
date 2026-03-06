@@ -162,9 +162,6 @@ target/
 Thumbs.db
 
 # Spring Boot
-.mvn/
-mvnw
-mvnw.cmd
 
 # Build Tools
 .gradle

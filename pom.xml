@@ -31,15 +31,11 @@
 		<java.version>17</java.version>
 		<spring-cloud.version>2025.1.1</spring-cloud.version>
 		<logstash-encoder.version>8.0</logstash-encoder.version>
+		<lombok.version>1.18.30</lombok.version>
 	</properties>
 
 	<dependencies>
 		<!-- Truly global parent-level dependencies (only Lombok for example) -->
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
 	</dependencies>
 
 	<dependencyManagement>
@@ -49,6 +45,13 @@
 				<groupId>com.nexus</groupId>
 				<artifactId>nexus-common</artifactId>
 				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>${lombok.version}</version>
+				<optional>true</optional>
 			</dependency>
 
 			<!-- Logstash encoder version management -->

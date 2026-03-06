@@ -10,5 +10,5 @@ spring:
     import: "optional:configserver:http://localhost:8888/"
   cloud:
     config:
-      username: nexus_admin
-      password: ${CONFIG_SERVER_PASSWORD}
+      username: ${NEXUS_USERNAME:nexus_admin}
+      password: ${CONFIG_SERVER_PASSWORD:}

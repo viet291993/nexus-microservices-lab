@@ -6,7 +6,6 @@ spring:
   data:
     mongodb:
       uri: ${MONGO_URL}
-
     # CẤU HÌNH REDIS
     redis:
       host: ${REDIS_HOST}
@@ -28,6 +27,6 @@ management:
   tracing:
     sampling:
       probability: ${SAMPLING_PROBABILITY:0.1} # request sẽ được trace (configurable, default 10%)
-    export:
-      zipkin:
-        endpoint: http://nexus-zipkin:9411/api/v2/spans
+  zipkin:
+    tracing:
+      endpoint: http://nexus-zipkin:9411/api/v2/spans

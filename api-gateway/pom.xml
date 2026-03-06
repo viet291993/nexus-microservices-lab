@@ -11,7 +11,6 @@
 	<artifactId>api-gateway</artifactId>
 	<name>API Gateway</name>
 	<description>API Gateway for Nexus Microservices</description>
-	<url/>
 	<dependencies>
 		<!-- Common module and basic microservice deps are now inherited from nexus-service-parent -->
 		<dependency>

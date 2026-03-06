@@ -9,6 +9,8 @@ spring:
     password: ${POSTGRES_PASSWORD:nexus_password}
   jpa:
     show-sql: true # Log script SQL SQL/Query ra màn hình để dễ bắt bug lúc code.
+    hibernate:
+      ddl-auto: validate # Default fallback
 
   # CẤU HÌNH KAFKA MESSAGE BROKER (Saga Pattern)
   kafka:
@@ -64,9 +66,9 @@ management:
   tracing:
     sampling:
       probability: ${SAMPLING_PROBABILITY:0.1}
-    export:
-      zipkin:
-        endpoint: http://nexus-zipkin:9411/api/v2/spans
+  zipkin:
+    tracing:
+      endpoint: http://nexus-zipkin:9411/api/v2/spans
 
 ---
 spring:

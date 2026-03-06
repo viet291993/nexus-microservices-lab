@@ -11,7 +11,6 @@
 	<artifactId>eureka-server</artifactId>
 	<name>Eureka Server</name>
 	<description>Service Discovery Server for Nexus Microservices</description>
-	<url/>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>

@@ -99,9 +99,13 @@ if [ "$HTTP_CODE" -ge 400 ]; then
 fi
 
 # Create user
+if [ -z "$LOGSTASH_PASSWORD" ]; then
+  echo "ERROR: LOGSTASH_PASSWORD is not set"
+  exit 1
+fi
 RESPONSE=$(curl_es -w "\n%{http_code}" -X POST "http://elasticsearch:9200/_security/user/logstash_writer" -H 'Content-Type: application/json' -d"
 {
-  \"password\": \"$ELASTIC_PASSWORD\",
+  \"password\": \"$LOGSTASH_PASSWORD\",
   \"roles\": [\"logstash_writer\"]
 }
 ")
@@ -114,7 +118,7 @@ fi
 echo "Logstash Writer role and user set up successfully."
 
 # 4. Set password for kibana_system user (required for Kibana to connect)
-if [ ! -z "$KIBANA_PASSWORD" ]; then
+if [ -n "$KIBANA_PASSWORD" ]; then
   echo "Setting password for kibana_system user..."
   RESPONSE=$(curl_es -w "\n%{http_code}" -X POST "http://elasticsearch:9200/_security/user/kibana_system/_password" -H 'Content-Type: application/json' -d"
   {
