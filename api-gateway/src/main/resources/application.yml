@@ -11,4 +11,5 @@ spring:
   cloud:
     config:
       username: ${NEXUS_USERNAME:nexus_admin}
+      # Dev: fallback dev_password. Prod: dùng ${CONFIG_SERVER_PASSWORD:?Required} trong application-prod.yml
       password: ${CONFIG_SERVER_PASSWORD:dev_password}

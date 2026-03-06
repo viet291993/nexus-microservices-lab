@@ -163,7 +163,8 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=true
-      - xpack.security.http.ssl.enabled=false # Tắt SSL cho HTTP để dễ dàng dùng curl và kết nối nội bộ
+      # HTTP SSL tắt cho dev: credentials gửi cleartext trong mạng nội bộ Docker. Prod: bật SSL + mount cert.
+      - xpack.security.http.ssl.enabled=false
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:

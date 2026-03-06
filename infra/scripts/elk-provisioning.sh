@@ -1,5 +1,6 @@
 #!/bin/sh
-apk add --no-cache curl jq
+set -e
+apk add --no-cache curl jq || { echo "ERROR: Failed to install curl/jq"; exit 1; }
 
 # Wait for Elasticsearch to be ready
 echo "Waiting for Elasticsearch to be ready..."
@@ -89,7 +90,7 @@ echo "Setting up Logstash Writer role and user..."
 # Create role
 RESPONSE=$(curl_es -w "\n%{http_code}" -X PUT "http://elasticsearch:9200/_security/role/logstash_writer" -H 'Content-Type: application/json' -d'
 {
-  "cluster": ["manage_index_templates", "monitor", "manage_ilm"],
+  "cluster": ["monitor", "manage_ilm"],
   "indices": [
     {
       "names": ["nexus-logs-*"],

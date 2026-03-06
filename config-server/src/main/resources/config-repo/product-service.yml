@@ -28,4 +28,4 @@ management:
       probability: ${SAMPLING_PROBABILITY:0.1} # request sẽ được trace (configurable, default 10%)
     export:
       zipkin:
-        endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+        endpoint: ${ZIPKIN_ENDPOINT:http://nexus-zipkin:9411/api/v2/spans}

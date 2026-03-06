@@ -1,4 +1,6 @@
 # Cấu hình chung cho TOÀN BỘ Microservices trong hệ thống Nexus
+# Lưu ý: /actuator/prometheus cần được bảo vệ ở tầng API Gateway (chỉ cho phép Prometheus nội bộ)
+# hoặc hạn chế theo network trong production.
 management:
     endpoints:
         web:

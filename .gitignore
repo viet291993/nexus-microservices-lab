@@ -162,6 +162,10 @@ target/
 Thumbs.db
 
 # Spring Boot
+*.jar
+*.war
+/target/
+/build/
 
 # Build Tools
 .gradle

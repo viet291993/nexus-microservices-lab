@@ -7,7 +7,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-COMPOSE_FILE="$SCRIPT_DIR/docker compose.yml"
+COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 
 trap 'echo "ERROR: Script failed at line $LINENO in $0"; exit 1' ERR
 
@@ -55,6 +55,8 @@ case "${1-}" in
       docker compose -f "$COMPOSE_FILE" down -v
       echo "🧹 Đã dọn dẹp xong tài nguyên của project."
       echo -e "\n💡 Mẹo: Dùng './manage.sh prune' để xóa luôn các Volume rác khác."
+    else
+      echo "❌ Đã hủy thao tác clean."
     fi
     ;;
   prune)

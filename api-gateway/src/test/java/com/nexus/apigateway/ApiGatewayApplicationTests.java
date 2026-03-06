@@ -26,9 +26,9 @@ class ApiGatewayApplicationTests {
 	}
 
 	@Test
-	void testAuthorizedRequest_ShouldReturn503Fallback() {
+	void testAuthorizedRequest_ShouldReturn4xxWhenBackendNotMapped() {
 		// Gửi 1 request CÓ Token giả lập (đã qua lớp bảo mật).
-		// Hiện tại route backend chưa map nên Gateway trả về 4xx (404 Not Found).
+		// Route backend chưa map nên Gateway trả về 4xx (404 Not Found).
 		webTestClient
 				.get()
 				.uri("/api/v1/users/profile")

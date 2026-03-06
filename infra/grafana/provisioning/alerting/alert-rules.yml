@@ -8,7 +8,7 @@ groups:
     rules:
       - uid: "kafka-lag-alert"
         title: "Kafka Consumer Lag High"
-        condition: C
+        condition: B
         for: 2m
         data:
           - refId: A
@@ -32,11 +32,6 @@ groups:
                     params: ["A"]
                   reducer:
                     type: "last"
-          - refId: C
-            datasourceUid: "-100"
-            model:
-              type: "math"
-              expression: "$B"
         annotations:
           summary: "Kafka lag too high for group {{ $labels.group }} on topic {{ $labels.topic }}"
         labels:
@@ -44,7 +39,7 @@ groups:
 
       - uid: "high-error-rate-alert"
         title: "High Error Rate (> 5%)"
-        condition: C
+        condition: B
         for: 1m
         data:
           - refId: A
@@ -68,11 +63,6 @@ groups:
                     params: ["A"]
                   reducer:
                     type: "last"
-          - refId: C
-            datasourceUid: "-100"
-            model:
-              type: "math"
-              expression: "$B"
         annotations:
           summary: "Service error rate is high: {{ $values.A }}%"
         labels:

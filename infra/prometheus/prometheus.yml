@@ -23,7 +23,7 @@ scrape_configs:
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
-        regex: "host.docker.internal:(.*)"
+        regex: "host\\.docker\\.internal:(.*)"
         replacement: "$1"
 
   # 3. Giám sát Kafka qua Kafka Exporter

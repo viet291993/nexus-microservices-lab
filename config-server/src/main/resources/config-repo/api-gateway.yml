@@ -89,7 +89,7 @@ management:
       probability: ${SAMPLING_PROBABILITY:0.1}
   zipkin:
     tracing:
-      endpoint: http://nexus-zipkin:9411/api/v2/spans
+      endpoint: ${ZIPKIN_ENDPOINT:http://nexus-zipkin:9411/api/v2/spans}
   endpoint:
     health:
       show-details: always

@@ -14,6 +14,7 @@
     "plugin.name": "pgoutput",
     "slot.name": "nexus_debezium_slot",
     "publication.name": "nexus_debezium_publication",
+    "schema.history.internal": "io.debezium.storage.kafka.history.KafkaSchemaHistory",
     "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
     "schema.history.internal.kafka.topic": "schema-changes.nexus",
     "key.converter": "org.apache.kafka.connect.json.JsonConverter",

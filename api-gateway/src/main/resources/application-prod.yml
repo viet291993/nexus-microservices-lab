@@ -1,0 +1,5 @@
+# Production: không dùng fallback mật khẩu
+spring:
+  cloud:
+    config:
+      password: ${CONFIG_SERVER_PASSWORD:?CONFIG_SERVER_PASSWORD is required for production}

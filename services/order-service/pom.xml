@@ -11,7 +11,6 @@
 	<artifactId>order-service</artifactId>
 	<name>order-service</name>
 	<description>Order Service for Nexus</description>
-	<url/>
 
 	<properties>
 		<zenwave.version>2.3.0</zenwave.version>
