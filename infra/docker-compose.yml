@@ -256,13 +256,14 @@ services:
   # ==========================================
   # Mục đích: Tự động đăng ký các Connector khi Kafka Connect đã sẵn sàng.
   cdc-provisioner:
-    image: curlimages/curl:8.7.1-alpine # Pin version cố định tránh breaking change.
+    image: curlimages/curl:8.7.1 # Pin version cố định tránh breaking change.
     container_name: nexus-cdc-provisioner
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-nexus_user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nexus_password}
       - DLQ_REPLICATION_FACTOR=${DLQ_REPLICATION_FACTOR:-1}
       - DLQ_TOLERANCE=${DLQ_TOLERANCE:-none}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
     volumes:
       - ./connectors:/connectors
       - ./scripts/cdc-provisioning.sh:/cdc-provisioning.sh

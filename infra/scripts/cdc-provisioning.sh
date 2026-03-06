@@ -32,13 +32,18 @@ register_connector() {
     sed "s|\${POSTGRES_USER}|$POSTGRES_USER|g; \
          s|\${POSTGRES_PASSWORD}|$POSTGRES_PASSWORD|g; \
          s|\${DLQ_REPLICATION_FACTOR}|$DLQ_REPLICATION_FACTOR|g; \
-         s|\${DLQ_TOLERANCE}|$DLQ_TOLERANCE|g" "$FILE" > "$TMP_FILE"
+         s|\${DLQ_TOLERANCE}|$DLQ_TOLERANCE|g; \
+         s|\${ELASTIC_PASSWORD}|$ELASTIC_PASSWORD|g" "$FILE" > "$TMP_FILE"
     
-    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" --data @"$TMP_FILE" http://kafka-connect:8083/connectors)
-    if [ "$RESPONSE" -eq 201 ] || [ "$RESPONSE" -eq 200 ]; then
-      echo "✅ Đăng ký $NAME thành công (HTTP $RESPONSE)."
+    RESPONSE=$(curl -s -w "%{http_code}" -X POST -H "Content-Type: application/json" --data @"$TMP_FILE" http://kafka-connect:8083/connectors)
+    HTTP_CODE=${RESPONSE: -3}
+    BODY=${RESPONSE%$HTTP_CODE}
+    if [ "$HTTP_CODE" -eq 201 ] || [ "$HTTP_CODE" -eq 200 ]; then
+      echo "✅ Đăng ký $NAME thành công (HTTP $HTTP_CODE)."
     else
-      echo "❌ Lỗi khi đăng ký $NAME (Mã lỗi: $RESPONSE)."
+      echo "❌ Lỗi khi đăng ký $NAME (Mã lỗi: $HTTP_CODE)."
+      echo "🔍 Response body từ Kafka Connect:"
+      echo "$BODY"
       exit 1
     fi
   fi
