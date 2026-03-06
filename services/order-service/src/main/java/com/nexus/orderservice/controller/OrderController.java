@@ -1,15 +1,12 @@
 package com.nexus.orderservice.controller;
 
-
 import java.util.Map;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,10 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
 
 import jakarta.validation.Valid;
 
-import com.nexus.orderservice.elasticsearch.events.OrderSyncEvent;
 import com.nexus.orderservice.entity.OrderEntity;
 import com.nexus.orderservice.entity.OrderStatus;
 import com.nexus.orderservice.events.model.OrderEventPayload;
@@ -50,26 +48,31 @@ public class OrderController {
 
     private final OrderProducerService producerService;
     private final OrderRepository orderRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Counter orderCreatedCounter;
 
+    /**
+     * Create an OrderController and register the "order_created_total" Micrometer counter.
+     *
+     * Registers a Counter named "order_created_total" to track the total number of orders created via the API.
+     *
+     * @param meterRegistry the MeterRegistry used to register the "order_created_total" counter
+     */
     public OrderController(OrderProducerService producerService, OrderRepository orderRepository,
-            ApplicationEventPublisher eventPublisher) {
+            MeterRegistry meterRegistry) {
         this.producerService = producerService;
         this.orderRepository = orderRepository;
-        this.eventPublisher = eventPublisher;
+        this.orderCreatedCounter = Counter.builder("order_created_total")
+                .description("Total number of orders created via API")
+                .register(meterRegistry);
     }
 
     /**
-     * API tạo đơn hàng mới.
+     * Create a new order with status PENDING and publish an ORDER_CREATED event for downstream processing.
      *
-     * Request Body mẫu (JSON):
-     * {
-     * "productId": "PRODUCT-001",
-     * "quantity": 5
-     * }
+     * @param request the create order request containing the product identifier and quantity
+     * @return a ResponseEntity with HTTP 202 (Accepted) whose body is a JSON map containing `orderId`, `status` ("PENDING"), and a human-readable `message`
      */
     @PostMapping
-    @Transactional
     public ResponseEntity<Map<String, String>> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         // Bước 1: Sinh UUID và trích xuất dữ liệu từ request body.
         String orderId = UUID.randomUUID().toString();
@@ -83,9 +86,6 @@ public class OrderController {
         orderRepository.save(order);
         log.info("💾 [ORDER] Đã lưu đơn hàng {} vào PostgreSQL (status=PENDING)", orderId);
 
-        // Bắn sự kiện đồng bộ CQRS (Elasticsearch)
-        eventPublisher.publishEvent(new OrderSyncEvent(this, orderId, productId, quantity, OrderStatus.PENDING.name()));
-
         // Bước 3: Đóng gói và gửi event ORDER_CREATED lên Kafka.
         // Sử dụng OrderEventPayload (generated từ AsyncAPI) với builder pattern và
         // type-safe enums.
@@ -97,6 +97,7 @@ public class OrderController {
                 .withEventType(OrderEventPayload.OrderEventType.ORDER_CREATED);
 
         producerService.sendOrderEvent(event);
+        orderCreatedCounter.increment();
         log.info("📤 [ORDER] Đã gửi event ORDER_CREATED vào Kafka, chờ Inventory xử lý...");
 
         // Trả ngay cho Client. Không đợi Inventory xử lý xong (Async).
