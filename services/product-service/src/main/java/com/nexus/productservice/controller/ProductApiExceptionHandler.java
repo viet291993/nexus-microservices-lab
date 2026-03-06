@@ -14,6 +14,12 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class ProductApiExceptionHandler {
 
+    /**
+     * Handle a ResponseStatusException by converting it into a standardized JSON response.
+     *
+     * @param ex the ResponseStatusException to convert into an HTTP response
+     * @return a ResponseEntity whose body is a map containing "status" (HTTP status code) and "error" (reason)
+     */
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, Object>> handleResponseStatusException(ResponseStatusException ex) {
         Map<String, Object> body = new HashMap<>();
@@ -22,6 +28,13 @@ public class ProductApiExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(body);
     }
 
+    /**
+     * Builds a 400 Bad Request response summarizing field validation errors.
+     *
+     * @param ex the exception containing binding/validation failures
+     * @return a ResponseEntity whose body is a map with keys "status" (400) and
+     *         "error" (a semicolon-separated string of "field: message" entries)
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult().getFieldErrors().stream()

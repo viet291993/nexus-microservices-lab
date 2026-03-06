@@ -39,13 +39,14 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
         private final Counter orderCancelledCounter;
 
         /**
-         * Create a new InventoryResponseConsumer and initialize its metrics.
+         * Create an InventoryResponseConsumer and set up its dependencies and metrics.
+         *
+         * Initializes the repository, event publisher, and meter registry, and registers
+         * counters for confirmed and cancelled orders.
          *
          * @param orderRepository repository for loading and persisting orders
-         * @param eventPublisher  application event publisher used to emit
-         *                        OrderSyncEvent events
-         * @param meterRegistry   MeterRegistry used to register Micrometer counters for
-         *                        confirmed and cancelled orders
+         * @param eventPublisher  application event publisher used to emit OrderSyncEvent events
+         * @param meterRegistry   MeterRegistry used to register Micrometer counters for confirmed and cancelled orders
          */
         public InventoryResponseConsumer(OrderRepository orderRepository, ApplicationEventPublisher eventPublisher,
                         MeterRegistry meterRegistry) {

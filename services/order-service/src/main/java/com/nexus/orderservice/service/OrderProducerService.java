@@ -29,9 +29,13 @@ public class OrderProducerService {
     }
 
     /**
-     * Gửi một sự kiện đơn hàng lên Kafka Topic "order-events-topic".
+     * Send an order event to the Kafka topic "order-events-topic".
      *
-     * @param event Đối tượng OrderEventPayload (generated từ AsyncAPI)
+     * Sets the `kafka_messageKey` header to the event's orderId bytes to ensure consistent Kafka partitioning.
+     *
+     * @param event the OrderEventPayload containing at minimum a non-blank `orderId` and an `eventType`
+     * @throws IllegalArgumentException if `event` is null or `event.getOrderId()` is null or blank
+     * @throws IllegalStateException if the underlying producer reports failure to dispatch the event
      */
     public void sendOrderEvent(OrderEventPayload event) {
         if (event == null || event.getOrderId() == null || event.getOrderId().isBlank()) {

@@ -11,10 +11,24 @@ public class DatabasePasswordValidator {
 
     private final Environment environment;
 
+    /**
+     * Create a DatabasePasswordValidator using the provided Spring environment.
+     *
+     * @param environment the Spring Environment used to read the `spring.datasource.password` property
+     *                    and to determine active profiles (to skip validation in dev/test)
+     */
     public DatabasePasswordValidator(Environment environment) {
         this.environment = environment;
     }
 
+    /**
+     * Validates that the configured PostgreSQL datasource password is not missing or the default in non-dev/test profiles.
+     *
+     * If the active profiles do not include "dev" or "test", throws an exception when
+     * `spring.datasource.password` is null, blank, or equals `"nexus_password"`.
+     *
+     * @throws IllegalStateException if validation fails in a non-dev/test profile
+     */
     @PostConstruct
     public void validatePostgresPassword() {
         boolean isDevProfile = Arrays.stream(environment.getActiveProfiles())

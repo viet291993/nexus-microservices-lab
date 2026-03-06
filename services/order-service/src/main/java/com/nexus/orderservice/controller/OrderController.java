@@ -51,9 +51,11 @@ public class OrderController {
     private final Counter orderCreatedCounter;
 
     /**
-     * Constructs an OrderController and registers the Micrometer Counter
-     * "order_created_total"
-     * used to track the number of orders created via the API.
+     * Create an OrderController and register the "order_created_total" Micrometer counter.
+     *
+     * Registers a Counter named "order_created_total" to track the total number of orders created via the API.
+     *
+     * @param meterRegistry the MeterRegistry used to register the "order_created_total" counter
      */
     public OrderController(OrderProducerService producerService, OrderRepository orderRepository,
             MeterRegistry meterRegistry) {
@@ -65,19 +67,10 @@ public class OrderController {
     }
 
     /**
-     * Create a new order and publish an ORDER_CREATED event for downstream
-     * processing.
+     * Create a new order with status PENDING and publish an ORDER_CREATED event for downstream processing.
      *
-     * The request should contain the product identifier and quantity. The method
-     * persists
-     * the order with status "PENDING", publishes a sync event, sends an
-     * ORDER_CREATED event
-     * to Kafka, and returns an immediate acknowledgment to the client.
-     *
-     * @param request the create order request containing `productId` and `quantity`
-     * @return a ResponseEntity with HTTP 202 (Accepted) whose body is JSON
-     *         containing `orderId`, `status` ("PENDING"), and a human-readable
-     *         `message`
+     * @param request the create order request containing the product identifier and quantity
+     * @return a ResponseEntity with HTTP 202 (Accepted) whose body is a JSON map containing `orderId`, `status` ("PENDING"), and a human-readable `message`
      */
     @PostMapping
     public ResponseEntity<Map<String, String>> createOrder(@Valid @RequestBody CreateOrderRequest request) {

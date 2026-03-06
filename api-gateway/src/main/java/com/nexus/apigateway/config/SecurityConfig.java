@@ -15,10 +15,25 @@ public class SecurityConfig {
 
     private final Environment environment;
 
+    /**
+     * Create a SecurityConfig that uses the application's Environment to enable profile-aware security rules.
+     *
+     * @param environment the Spring Environment used to read active profiles (for example, to detect the "prod" profile)
+     */
     public SecurityConfig(Environment environment) {
         this.environment = environment;
     }
 
+    /**
+     * Configure and build the application's security filter chain with route-specific access rules and a JWT-based OAuth2 resource server.
+     *
+     * <p>Permits unauthenticated access to /eureka/**, /fallback/**, /actuator/health, and /actuator/info.
+     * Access to /actuator/prometheus is authenticated when the active Spring profile contains "prod", otherwise it is permitted.
+     * All other exchanges require authentication. CORS is enabled with default settings and CSRF is disabled.</p>
+     *
+     * @param http the ServerHttpSecurity instance used to configure HTTP security
+     * @return the configured SecurityWebFilterChain enforcing the above route rules and JWT-based authentication
+     */
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");

@@ -5,7 +5,7 @@ apk add --no-cache curl jq || { echo "ERROR: Failed to install curl/jq"; exit 1;
 # Wait for Elasticsearch to be ready
 echo "Waiting for Elasticsearch to be ready..."
 
-# curl_es wraps curl to call Elasticsearch; it adds HTTP basic auth using ELASTIC_PASSWORD when set and runs curl with --fail.
+# curl_es wraps curl to call Elasticsearch, adding HTTP basic auth from ELASTIC_PASSWORD when set and using --fail and silent flags.
 curl_es() {
   if [ -n "$ELASTIC_PASSWORD" ]; then
     curl -f -s -u "elastic:$ELASTIC_PASSWORD" "$@"

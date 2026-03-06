@@ -12,6 +12,11 @@ import com.nexus.configserver.config.SecurityProperties;
 @EnableConfigurationProperties(SecurityProperties.class)
 public class ConfigServerApplication {
 
+	/**
+	 * Bootstrap the Spring Boot application and initialize the Spring Cloud Config Server.
+	 *
+	 * @param args command-line arguments passed to the application
+	 */
 	public static void main(String[] args) {
 		SpringApplication.run(ConfigServerApplication.class, args);
 	}

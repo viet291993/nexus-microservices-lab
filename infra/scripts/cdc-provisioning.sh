@@ -27,6 +27,7 @@ MAX_RETRIES=30
 RETRY=0
 TMP_FILE=""
 
+# cleanup_tmp removes the temporary file referenced by TMP_FILE if TMP_FILE is non-empty and the file exists.
 cleanup_tmp() {
   if [ -n "$TMP_FILE" ] && [ -f "$TMP_FILE" ]; then
     rm -f "$TMP_FILE"
@@ -45,6 +46,7 @@ until curl -s -f --connect-timeout 5 --max-time 10 http://kafka-connect:8083/con
   sleep 5
 done
 
+# render_connector_payload renders a connector JSON template by injecting POSTGRES_USER, POSTGRES_PASSWORD, ELASTIC_PASSWORD, DLQ_TOLERANCE, and DLQ_REPLICATION_FACTOR into the template's config and writes the resulting JSON to stdout.
 render_connector_payload() {
   file="$1"
   jq \
@@ -67,6 +69,7 @@ render_connector_payload() {
     ' "$file"
 }
 
+# register_connector registers a Kafka Connect connector from the given JSON template file, skipping registration if a connector with the same name already exists.
 register_connector() {
   NAME=$1
   FILE=$2

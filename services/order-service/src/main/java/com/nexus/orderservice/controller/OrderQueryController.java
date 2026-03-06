@@ -32,7 +32,24 @@ public class OrderQueryController {
     }
 
     /**
-     * API tìm kiếm đơn hàng trong Elasticsearch (Fast Read).
+     * Searches orders in Elasticsearch using optional filters and returns matching documents.
+     *
+     * <p>If `orderId` is provided, the response contains either the matching document in a single-element
+     * list or an empty list if not found. Otherwise, results are determined by the presence of
+     * `status` and/or `productId`:
+     * <ul>
+     *   <li>both `status` and `productId` — returns documents matching both filters</li>
+     *   <li>only `status` — returns documents matching the status</li>
+     *   <li>only `productId` — returns documents matching the productId</li>
+     *   <li>no filters — returns a paginated subset of all documents</li>
+     * </ul>
+     *
+     * @param orderId   optional order identifier; when present the search returns at most the matching document
+     * @param status    optional order status filter
+     * @param productId optional product identifier filter
+     * @param page      page index for pagination when no filters are provided; negative values are treated as 0
+     * @param size      page size for pagination when no filters are provided; values are clamped to the range 1–100
+     * @return          a list of matching OrderDocument instances; may be empty
      */
     @GetMapping("/search")
     public ResponseEntity<List<OrderDocument>> searchOrders(
@@ -73,6 +90,14 @@ public class OrderQueryController {
         return ResponseEntity.ok(results);
     }
 
+    /**
+     * Normalize a string for safe inclusion in logs by replacing control characters and limiting length.
+     *
+     * Replaces newline, carriage return, tab and other control characters with underscores and truncates the result to at most 200 characters.
+     *
+     * @param value the input string to sanitize; may be null
+     * @return the sanitized string, or {@code null} if {@code value} is {@code null}
+     */
     private String sanitizeForLog(String value) {
         if (value == null) {
             return null;

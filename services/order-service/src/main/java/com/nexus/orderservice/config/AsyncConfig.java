@@ -9,6 +9,14 @@ import java.util.concurrent.Executor;
 @Configuration
 public class AsyncConfig {
 
+    /**
+     * Provide the application's task Executor used for asynchronous task execution.
+     *
+     * Configures a ThreadPoolTaskExecutor with a core pool size of 2, maximum pool size of 4,
+     * queue capacity of 100, and thread name prefix "order-async-".
+     *
+     * @return an Executor backed by the configured ThreadPoolTaskExecutor
+     */
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

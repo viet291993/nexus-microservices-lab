@@ -22,14 +22,22 @@ public class OrderSyncEventListener {
 
     private final OrderSearchRepository searchRepository;
 
+    /**
+     * Create an OrderSyncEventListener backed by the provided search repository.
+     *
+     * @param searchRepository repository used to query and persist OrderDocument instances in Elasticsearch
+     */
     public OrderSyncEventListener(OrderSearchRepository searchRepository) {
         this.searchRepository = searchRepository;
     }
 
     /**
-     * Lắng nghe các sự kiện đồng bộ từ Command-side (Luồng ghi)
-     * và cập nhật ngay lập tức vào Elasticsearch (Read-side).
-     * Retry tối đa 3 lần; sau đó log và bỏ qua (DLQ-style: ghi log để xử lý thủ công nếu cần).
+     * Handle an order synchronization event by creating or updating the corresponding Elasticsearch read-side document.
+     *
+     * Attempts the operation up to MAX_ATTEMPTS with a fixed delay between attempts; on persistent failure logs an error and skips further processing (DLQ-style).
+     * If an existing document is in a final status (CONFIRMED or CANCELLED), any differing incoming status is treated idempotently and the update is skipped.
+     *
+     * @param event the OrderSyncEvent containing the order ID, product/quantity data, and the new OrderStatus
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -69,6 +77,11 @@ public class OrderSyncEventListener {
         log.error("❌ [CQRS SYNC ERROR] Đã thử {} lần vẫn lỗi, bỏ qua (có thể xử lý lại từ nguồn khác): orderId={}", MAX_ATTEMPTS, orderId, lastException);
     }
 
+    /**
+     * Creates or replaces the search-side OrderDocument from the given event and persists it to Elasticsearch.
+     *
+     * @param event the synchronization event containing orderId, productId, quantity, and status used to build the document
+     */
     private void updateDocument(OrderSyncEvent event) {
         OrderDocument document = new OrderDocument(
                 event.getOrderId(),
@@ -81,6 +94,12 @@ public class OrderSyncEventListener {
                 event.getOrderId(), event.getStatus());
     }
 
+    /**
+     * Determine whether the given status string represents a final order state.
+     *
+     * @param status the status name to check (case-insensitive)
+     * @return `true` if the status equals `CONFIRMED` or `CANCELLED` (case-insensitive), `false` otherwise
+     */
     private boolean isFinalStatus(String status) {
         return OrderStatus.CONFIRMED.name().equalsIgnoreCase(status) ||
                 OrderStatus.CANCELLED.name().equalsIgnoreCase(status);

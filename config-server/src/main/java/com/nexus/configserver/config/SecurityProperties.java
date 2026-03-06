@@ -19,10 +19,26 @@ public class SecurityProperties {
 
     private final Environment environment;
 
+    /**
+     * Creates a SecurityProperties instance backed by the given Spring Environment.
+     *
+     * @param environment the Spring Environment used to inspect active profiles for runtime validation
+     */
     public SecurityProperties(Environment environment) {
         this.environment = environment;
     }
 
+    /**
+     * Validates the configured security password for non-dev Spring profiles.
+     *
+     * <p>Validation is skipped when the active profiles include "dev". For non-dev profiles, the
+     * property bound to {@code spring.security.user.password} must be present, not blank, and must
+     * not equal the default value {@code "dev_password"}.
+     *
+     * @throws IllegalStateException if the password is null in a non-dev profile
+     * @throws IllegalStateException if the password is blank (only whitespace) in a non-dev profile
+     * @throws IllegalStateException if the password equals the default value {@code "dev_password"} in a non-dev profile
+     */
     @PostConstruct
     public void validate() {
         boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
