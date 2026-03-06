@@ -101,19 +101,22 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       # JVM Tuning: Quan trọng để tránh OOM kill (Apache image mặc định Heap khá lớn).
       KAFKA_HEAP_OPTS: -Xmx400m -Xms200m
       KAFKA_LOG_DIRS: /var/lib/kafka/data # Đảm bảo data được ghi vào đúng Volume (Official image mặc định ghi vào /tmp).
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
       - nexus-net
-    mem_limit: 600mb
+    mem_limit: 1024mb
     restart: unless-stopped
 
   # ==========================================
@@ -145,22 +148,24 @@ services:
     image: elasticsearch:8.17.4 # Chuyển về Official Image của Elastic.
     container_name: nexus-elasticsearch
     environment:
-      - discovery.type=single-node # Bắt buộc cho mô hình Single Node.
-      - xpack.security.enabled=true # BẬT Security: Bảo mật cụm ELK.
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false # Tắt SSL cho HTTP để dễ dàng dùng curl và kết nối nội bộ
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - ES_JAVA_OPTS=-Xms400m -Xmx400m # Phải set để tránh ES tự lấy 50% RAM máy host, gây crash container khi có mem_limit.
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - "9200:9200"
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf -u elastic:$$ELASTIC_PASSWORD http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1"] # Dùng $$ để escape biến môi trường trong CMD-SHELL.
-      interval: 10s
+      test: ["CMD-SHELL", "curl -sf -k -u elastic:$$ELASTIC_PASSWORD http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1"]
+      interval: 20s
       timeout: 10s
       retries: 5
+      start_period: 60s
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
       - nexus-net
-    mem_limit: 800mb
+    mem_limit: 1536mb # Tăng thêm để đảm bảo ổn định
     restart: unless-stopped
 
   # ==========================================
