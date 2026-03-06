@@ -12,6 +12,9 @@ for var in POSTGRES_USER POSTGRES_PASSWORD ELASTIC_PASSWORD; do
     exit 1
   fi
 done
+# Safe defaults cho DLQ (dùng bởi elasticsearch-sink connector)
+export DLQ_REPLICATION_FACTOR="${DLQ_REPLICATION_FACTOR:-1}"
+export DLQ_TOLERANCE="${DLQ_TOLERANCE:-none}"
 
 echo "⏳ Đợi Connect sẵn sàng..."
 MAX_RETRIES=30

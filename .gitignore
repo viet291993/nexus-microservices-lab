@@ -161,11 +161,10 @@ target/
 .DS_Store
 Thumbs.db
 
-# Spring Boot
+# Spring Boot (target/ đã có ở Maven; dùng target/, build/ không leading slash để ignore mọi cấp)
 *.jar
 *.war
-/target/
-/build/
+build/
 
 # Build Tools
 .gradle

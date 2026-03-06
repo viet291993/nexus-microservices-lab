@@ -7,7 +7,7 @@ Tài liệu này dùng để theo dõi các bước thực hiện và ghi nhận
 **Ngày thực hiện:** 2026-03-05
 **Công việc:**
 1. Thêm cấu hình chạy `elasticsearch` và `kibana` (phiên bản 9.2.0) vào file `infra/docker-compose.yml`.
-2. Bật bảo mật Elasticsearch (`xpack.security.enabled=true`) trong docker-compose; tắt SSL HTTP (`xpack.security.http.ssl.enabled=false`) cho môi trường dev local; `discovery.type=single-node`.
+2. Bật bảo mật Elasticsearch (`xpack.security.enabled=true`) trong docker-compose; tắt SSL HTTP (`xpack.security.http.ssl.enabled=false`) cho môi trường dev local; `discovery.type=single-node`. **Production:** bật `xpack.security.http.ssl.enabled=true` và cấu hình certificate; `discovery.type=single-node` chỉ dùng cho dev/test.
 3. Khai báo giới hạn bộ nhớ Java Heap cho ES (`ES_JAVA_OPTS=-Xms512m -Xmx512m`) để tránh ngốn RAM làm crash Docker của máy Mac.
 4. Thêm thư viện `spring-boot-starter-data-elasticsearch` vào thẻ `dependencies` trong `pom.xml` của Order Service.
 
