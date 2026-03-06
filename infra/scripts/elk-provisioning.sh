@@ -87,7 +87,7 @@ echo "Index Template created successfully."
 # 3. Create Logstash Writer Role and User (Least Privilege)
 echo "Setting up Logstash Writer role and user..."
 # Create role
-RESPONSE=$(curl_es -w "\n%{http_code}" -X POST "http://elasticsearch:9200/_security/role/logstash_writer" -H 'Content-Type: application/json' -d'
+RESPONSE=$(curl_es -w "\n%{http_code}" -X PUT "http://elasticsearch:9200/_security/role/logstash_writer" -H 'Content-Type: application/json' -d'
 {
   "cluster": ["manage_index_templates", "monitor", "manage_ilm"],
   "indices": [
@@ -111,7 +111,7 @@ if [ -z "$LOGSTASH_PASSWORD" ]; then
   exit 1
 fi
 JSON_BODY=$(jq -n --arg pw "$LOGSTASH_PASSWORD" '{password: $pw, roles: ["logstash_writer"]}')
-RESPONSE=$(curl_es -w "\n%{http_code}" -X POST "http://elasticsearch:9200/_security/user/logstash_writer" -H 'Content-Type: application/json' -d "$JSON_BODY")
+RESPONSE=$(curl_es -w "\n%{http_code}" -X PUT "http://elasticsearch:9200/_security/user/logstash_writer" -H 'Content-Type: application/json' -d "$JSON_BODY")
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 if [ "$HTTP_CODE" -ge 400 ]; then
   echo "ERROR: Failed to create logstash_writer user (HTTP $HTTP_CODE)"

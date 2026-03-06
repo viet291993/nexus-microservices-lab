@@ -17,7 +17,7 @@ groups:
               from: 600
               to: 0
             model:
-              expr: "sum(kafka_consumergroup_group_lag) by (group, topic)"
+              expr: "sum(kafka_consumergroup_lag) by (group, topic)"
           - refId: B
             datasourceUid: "-100" # Expression
             model:

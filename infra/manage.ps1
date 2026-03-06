@@ -64,9 +64,14 @@ switch ($Action) {
     }
 
     "prune" {
-        Write-Host "🧹 Đang dọn dẹp TOÀN BỘ Volume thừa (Anonymous Volumes) không sử dụng trong hệ thống..." -ForegroundColor Yellow
-        docker volume prune -f
-        Write-Host "✅ Đã dọn dẹp sạch sẽ các Volume thừa." -ForegroundColor Green
+        Write-Host "⚠️ CẢNH BÁO: Thao tác này sẽ xóa TOÀN BỘ Volume thừa (Anonymous Volumes) không sử dụng trong hệ thống!" -ForegroundColor Red
+        $confirmation = Read-Host "Bạn có chắc chắn muốn tiếp tục? (y/N)"
+        if ($confirmation -match '^[yY]$') {
+            docker volume prune -f
+            Write-Host "✅ Đã dọn dẹp sạch sẽ các Volume thừa." -ForegroundColor Green
+        } else {
+            Write-Host "❌ Đã hủy thao tác prune volumes." -ForegroundColor Gray
+        }
     }
 }
 

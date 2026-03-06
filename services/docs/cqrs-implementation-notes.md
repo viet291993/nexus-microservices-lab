@@ -3,6 +3,7 @@
 Tài liệu này dùng để theo dõi các bước thực hiện và ghi nhận các vấn đề (issues/blockers) phát sinh trong suốt quá trình áp dụng mẫu CQRS cho Order Service.
 
 ## Phase 1: Hạ tầng (Infrastructure)
+
 **Ngày thực hiện:** 2026-03-05
 **Công việc:**
 1. Thêm cấu hình chạy `elasticsearch` và `kibana` (phiên bản 9.2.0) vào file `infra/docker-compose.yml`.
@@ -16,10 +17,13 @@ Tài liệu này dùng để theo dõi các bước thực hiện và ghi nhận
 ---
 
 ## Phase 2: Command Service (Viết và lưu giữ)
+
 - **HOÀN THÀNH**: Database PostgreSQL đóng vai trò Source of Truth.
 
 ## Phase 3: Synchronization (Đồng bộ Eventual Consistency bằng Kafka)
+
 - **HOÀN THÀNH**: Sử dụng Kafka CDC và `OrderSyncEventListener` để đồng bộ dữ liệu sang Elasticsearch.
 
 ## Phase 4: Query Service (Đọc từ Elasticsearch)
+
 - **HOÀN THÀNH**: API `OrderQueryController` cung cấp khả năng tìm kiếm nâng cao qua Elasticsearch và ES|QL.

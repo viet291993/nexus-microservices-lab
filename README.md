@@ -42,11 +42,13 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 * **Resilience:** Tập trung xử lý **Retry**, **Dead Letter Queue** và **Circuit Breaker** (Resilience4j). Một mảnh vỡ không được phép làm sập toàn bộ bức tranh.
 * **Data Consistency:** Xử lý bài toán nhất quán dữ liệu qua Saga Choreography và đồng bộ CQRS giữa Postgres - Elasticsearch.
 
+
 ### 3. Observability is Mandatory (Giám sát là bắt buộc)
 
 * **Traceability:** Mọi request được gắn `correlation_id` xuyên suốt từ Gateway qua Kafka đến ELK Stack.
 * **Unified Dashboard:** Theo dõi sức khỏe hệ thống (CPU/RAM/Kafka Lag) qua Prometheus & Grafana.
 * **Troubleshooting Playbook:** Quy trình chuẩn để "bắt bệnh" hệ thống. 👉 [Xem chi tiết tại đây](./services/docs/troubleshooting-playbook.md)
+
 
 ### 4. Chaos Engineering (Mô phỏng đổ vỡ)
 

@@ -41,7 +41,9 @@ Hệ thống hạ tầng Nexus hỗ trợ cơ chế đồng bộ dữ liệu **T
 
 Để tự động hóa và đơn giản hóa việc quản lý hơn 10 dịch vụ hạ tầng, chúng tôi đã xây dựng bộ công cụ **Lab Manager**. Bạn không cần nhớ các lệnh Docker phức tạp nữa.
 
+
 ### 1. Sử dụng trên Windows (PowerShell)
+
 Mở Terminal tại thư mục `infra/` và sử dụng lệnh `.\manage.ps1`:
 - **Khởi động toàn bộ:** `.\manage.ps1 start`
 - **Dừng hệ thống:** `.\manage.ps1 stop`
@@ -50,7 +52,9 @@ Mở Terminal tại thư mục `infra/` và sử dụng lệnh `.\manage.ps1`:
 - **Dọn dẹp & Reset dữ liệu project:** `.\manage.ps1 clean`
 - **Dọn dẹp Volume rác hệ thống:** `.\manage.ps1 prune`
 
+
 ### 2. Sử dụng trên Linux/WSL (Bash)
+
 Cấp quyền thực thi lần đầu: `chmod +x manage.sh`, sau đó sử dụng:
 - `./manage.sh {start|stop|status|logs|clean|prune}`
 
@@ -59,6 +63,6 @@ Cấp quyền thực thi lần đầu: `chmod +x manage.sh`, sau đó sử dụn
 
 ## 🛠️ Lưu ý về Tài nguyên (Optimization)
 
-Hệ thống đã được cấu hình **Resource Limits** (Giới hạn RAM) cho từng Container để đảm bảo Lab có thể chạy mượt mà trên máy cá nhân có RAM từ 16GB trở lên. 
+Hệ thống đã được cấu hình **Resource Limits** (Giới hạn RAM) cho từng Container để đảm bảo Lab có thể chạy mượt mà trên máy cá nhân có RAM từ 16GB trở lên.
 
 Nếu máy bạn bị giật lag, hãy dùng lệnh `status` để kiểm tra container nào đang chiếm dụng nhiều tài nguyên nhất.

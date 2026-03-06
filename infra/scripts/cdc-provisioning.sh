@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # ==========================================
 # SCRIPT CẤU HÌNH TỰ ĐỘNG CDC (CDC PROVISIONING) - ROBUST VERSION
@@ -38,16 +38,19 @@ register_connector() {
     # Substitute environment variables in the JSON file
     # We use a temporary file to hold the substituted content
     TMP_FILE="/tmp/$NAME.json"
-    sed "s|\${POSTGRES_USER}|$POSTGRES_USER|g; \
-         s|\${POSTGRES_PASSWORD}|$POSTGRES_PASSWORD|g; \
-         s|\${DLQ_REPLICATION_FACTOR}|$DLQ_REPLICATION_FACTOR|g; \
-         s|\${DLQ_TOLERANCE}|$DLQ_TOLERANCE|g; \
-         s|\${ELASTIC_PASSWORD}|$ELASTIC_PASSWORD|g" "$FILE" > "$TMP_FILE"
-    
+    while IFS= read -r line; do
+      line="${line//\$\{POSTGRES_USER\}/$POSTGRES_USER}"
+      line="${line//\$\{POSTGRES_PASSWORD\}/$POSTGRES_PASSWORD}"
+      line="${line//\$\{DLQ_REPLICATION_FACTOR\}/$DLQ_REPLICATION_FACTOR}"
+      line="${line//\$\{DLQ_TOLERANCE\}/$DLQ_TOLERANCE}"
+      line="${line//\$\{ELASTIC_PASSWORD\}/$ELASTIC_PASSWORD}"
+      printf '%s\n' "$line"
+    done < "$FILE" > "$TMP_FILE"
+
     RESPONSE=$(curl -s -w "%{http_code}" -X POST -H "Content-Type: application/json" --data @"$TMP_FILE" http://kafka-connect:8083/connectors)
     rm -f "$TMP_FILE"
-    HTTP_CODE=${RESPONSE: -3}
-    BODY=${RESPONSE%$HTTP_CODE}
+    HTTP_CODE=$(printf '%s' "$RESPONSE" | tail -c 3)
+    BODY=${RESPONSE%???}
     if [ "$HTTP_CODE" -eq 201 ] || [ "$HTTP_CODE" -eq 200 ]; then
       echo "✅ Đăng ký $NAME thành công (HTTP $HTTP_CODE)."
     else

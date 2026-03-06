@@ -16,12 +16,15 @@ if [ -z "$PIDS" ]; then
     echo "  -> Không có tiến trình Spring Boot nào đang chạy."
 else
     echo "  -> Đang gửi SIGTERM (Graceful shutdown) tới PIDs: $PIDS"
-    printf '%s\n' "$PIDS" | xargs --no-run-if-empty kill -15 2>/dev/null || true
-    sleep 2
-    STILL_RUNNING=$(pgrep -f "java.*nexus-microservices-lab" || true)
+    for pid in $PIDS; do kill -15 "$pid" 2>/dev/null || true; done
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+        sleep 1
+        STILL_RUNNING=$(pgrep -f "java.*nexus-microservices-lab" || true)
+        [ -z "$STILL_RUNNING" ] && break
+    done
     if [ -n "$STILL_RUNNING" ]; then
         echo "  -> Đang ép buộc dừng (kill -9) còn lại..."
-        printf '%s\n' "$STILL_RUNNING" | xargs --no-run-if-empty kill -9 2>/dev/null || true
+        for pid in $STILL_RUNNING; do kill -9 "$pid" 2>/dev/null || true; done
     fi
     echo "  -> Đã dọn dẹp xong tiến trình."
 fi
