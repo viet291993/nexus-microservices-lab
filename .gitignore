@@ -161,7 +161,7 @@ target/
 .DS_Store
 Thumbs.db
 
-# Spring Boot (target/ đã có ở Maven; dùng target/, build/ không leading slash để ignore mọi cấp)
+# Spring Boot (target/ already in Maven; using target/, build/ without leading slash to ignore at all levels)
 *.jar
 *.war
 build/

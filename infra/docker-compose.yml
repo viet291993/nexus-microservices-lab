@@ -266,7 +266,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:?POSTGRES_USER is required}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - DLQ_REPLICATION_FACTOR=${DLQ_REPLICATION_FACTOR:-1}
-      - DLQ_TOLERANCE=${DLQ_TOLERANCE:-none}
+      - DLQ_TOLERANCE=${DLQ_TOLERANCE:-all}
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
     volumes:
       - ./connectors:/connectors
