@@ -90,7 +90,9 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 
 ### Phase 5: CI/CD & Automation — 50%
 
-- [ ] **GitHub Actions:** Tự động hóa quy trình test và build images.
+- [ ] **CI pipeline:** GitHub Actions chạy `mvn -DskipTests verify`, `npm ci && npm test && npm run build` và validate Docker Compose trên mỗi PR.
+- [ ] **Image build & registry:** Build Docker image cho từng service và push lên registry (GHCR/Docker Hub) khi merge vào `main`.
+- [ ] **Optional deploy hooks:** Chuẩn bị sẵn bước deploy có thể dùng cho Docker Swarm hoặc Kubernetes (khi có cluster thật).
 - [x] **Infrastructure as Code:** Bộ script `manage.ps1`/`manage.sh` giúp khởi tạo toàn bộ Lab chỉ với 1 câu lệnh.
 
 ---
