@@ -348,6 +348,7 @@ services:
     container_name: nexus-prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/kafka-dlq.rules.yml:/etc/prometheus/kafka-dlq.rules.yml:ro
     ports:
       - "9090:9090"
     extra_hosts:

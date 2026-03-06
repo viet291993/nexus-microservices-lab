@@ -1,0 +1,19 @@
+groups:
+  - name: nexus-kafka-dlq
+    interval: 1m
+    rules:
+      # Kafka Exporter offsets:
+      # - kafka_topic_partition_current_offset{topic,partition}
+      # DLQ accumulation detection: offset growth over a window.
+      - record: nexus:kafka_dlq_messages_increase_15m
+        expr: sum by (topic) (increase(kafka_topic_partition_current_offset{topic=~"nexus\\..*\\.dlq"}[15m]))
+
+      - alert: NexusKafkaDLQMessagesAccumulating
+        expr: nexus:kafka_dlq_messages_increase_15m > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka DLQ đang tăng nhanh (topic={{ $labels.topic }})"
+          description: "DLQ có tăng > 100 messages/15m trong 10 phút liên tiếp. Kiểm tra Kafka Connect / consumer và nội dung DLQ."
+

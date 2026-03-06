@@ -2,6 +2,9 @@ global:
   scrape_interval: 15s # Thu thập dữ liệu mỗi 15 giây
   evaluation_interval: 15s # Đánh giá quy tắc mỗi 15 giây
 
+rule_files:
+  - "/etc/prometheus/kafka-dlq.rules.yml"
+
 scrape_configs:
   # 1. Tự giám sát Prometheus
   - job_name: "prometheus"

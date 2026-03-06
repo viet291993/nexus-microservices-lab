@@ -67,3 +67,34 @@ groups:
           summary: "Service error rate is high: {{ $values.A }}%"
         labels:
           severity: critical
+
+      - uid: "kafka-dlq-accumulating-alert"
+        title: "Kafka DLQ Messages Accumulating"
+        condition: B
+        for: 10m
+        data:
+          - refId: A
+            datasourceUid: "prometheus"
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: "sum by (topic) (increase(kafka_topic_partition_current_offset{topic=~\"nexus\\\\..*\\\\.dlq\"}[15m]))"
+          - refId: B
+            datasourceUid: "-100"
+            model:
+              type: "classic_conditions"
+              conditions:
+                - evaluator:
+                    params: [100]
+                    type: "gt"
+                  operator:
+                    type: "and"
+                  query:
+                    params: ["A"]
+                  reducer:
+                    type: "last"
+        annotations:
+          summary: "DLQ đang tăng nhanh (topic {{ $labels.topic }})"
+        labels:
+          severity: warning
