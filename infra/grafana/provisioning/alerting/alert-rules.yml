@@ -17,7 +17,7 @@ groups:
               from: 600
               to: 0
             model:
-              expr: "sum(kafka_consumergroup_group_lag) by (consumergroup, topic)"
+              expr: "sum(kafka_consumergroup_group_lag) by (group, topic)"
           - refId: B
             datasourceUid: "-100" # Expression
             model:
@@ -38,7 +38,7 @@ groups:
               type: "math"
               expression: "$B"
         annotations:
-          summary: "Kafka lag too high for group {{ $labels.consumergroup }} on topic {{ $labels.topic }}"
+          summary: "Kafka lag too high for group {{ $labels.group }} on topic {{ $labels.topic }}"
         labels:
           severity: warning
 
@@ -53,7 +53,7 @@ groups:
               from: 300
               to: 0
             model:
-              expr: "(sum(rate(http_server_requests_seconds_count{status=~'5..'}[1m])) or vector(0)) / (sum(rate(http_server_requests_seconds_count[1m])) > 0) * 100"
+              expr: "(sum(rate(http_server_requests_seconds_count{status=~'5..'}[1m])) or vector(0)) / clamp_min(sum(rate(http_server_requests_seconds_count[1m])), 1) * 100"
           - refId: B
             datasourceUid: "-100"
             model:

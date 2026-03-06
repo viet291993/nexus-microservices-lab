@@ -145,10 +145,6 @@ vite.config.ts.timestamp-*
 
 # Maven
 target/
-target/*.zip
-target/*.war
-target/*.tar.gz
-target/*.rar
 
 # IDEs
 .idea/
@@ -167,13 +163,13 @@ Thumbs.db
 
 # Spring Boot
 .mvn/
-gradle/wrapper/*
 mvnw
 mvnw.cmd
 
 # Build Tools
 .gradle
 gradle-app.setting
+gradle/wrapper/*
 !gradle/wrapper/gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.properties
 .gradletasknamecache
