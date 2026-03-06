@@ -260,7 +260,7 @@ services:
   # ==========================================
   # Mục đích: Tự động đăng ký các Connector khi Kafka Connect đã sẵn sàng.
   cdc-provisioner:
-    image: curlimages/curl:8.7.1 # Pin version cố định tránh breaking change.
+    image: alpine:3.19
     container_name: nexus-cdc-provisioner
     environment:
       - POSTGRES_USER=${POSTGRES_USER:?POSTGRES_USER is required}

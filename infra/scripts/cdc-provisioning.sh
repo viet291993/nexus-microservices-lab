@@ -1,21 +1,26 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 # ==========================================
 # SCRIPT CẤU HÌNH TỰ ĐỘNG CDC (CDC PROVISIONING) - ROBUST VERSION
 # ==========================================
 
-# Validate required environment variables
+apk add --no-cache curl jq >/dev/null 2>&1 || { echo "❌ Lỗi: Không cài được curl/jq"; exit 1; }
+
+# Validate required environment variables (POSIX sh)
 for var in POSTGRES_USER POSTGRES_PASSWORD ELASTIC_PASSWORD; do
-  if [ -z "${!var:-}" ]; then
+  eval val=\$$var
+  if [ -z "${val:-}" ]; then
     echo "❌ Lỗi: Biến môi trường $var chưa được thiết lập."
     exit 1
   fi
 done
+
 # Safe defaults cho DLQ (dùng bởi elasticsearch-sink connector)
-# tolerance=all: chuyển message lỗi sang DLQ thay vì dừng connector; replication_factor: 2+ cho production (1 broker thì dùng 1)
-export DLQ_REPLICATION_FACTOR="${DLQ_REPLICATION_FACTOR:-1}"
-export DLQ_TOLERANCE="${DLQ_TOLERANCE:-all}"
+# tolerance=all: chuyển message lỗi sang DLQ thay vì dừng connector
+DLQ_REPLICATION_FACTOR="${DLQ_REPLICATION_FACTOR:-1}"
+DLQ_TOLERANCE="${DLQ_TOLERANCE:-all}"
+export DLQ_REPLICATION_FACTOR DLQ_TOLERANCE
 
 echo "⏳ Đợi Connect sẵn sàng..."
 MAX_RETRIES=30
@@ -40,6 +45,28 @@ until curl -s -f --connect-timeout 5 --max-time 10 http://kafka-connect:8083/con
   sleep 5
 done
 
+render_connector_payload() {
+  file="$1"
+  jq \
+    --arg postgresUser "$POSTGRES_USER" \
+    --arg postgresPassword "$POSTGRES_PASSWORD" \
+    --arg elasticPassword "$ELASTIC_PASSWORD" \
+    --arg dlqTolerance "$DLQ_TOLERANCE" \
+    --arg dlqReplicationFactor "$DLQ_REPLICATION_FACTOR" \
+    '
+      .config |= (
+        if has("database.user") then .["database.user"] = $postgresUser else . end |
+        if has("database.password") then .["database.password"] = $postgresPassword else . end |
+        if has("connection.password") then .["connection.password"] = $elasticPassword else . end |
+        if has("errors.tolerance") then .["errors.tolerance"] = $dlqTolerance else . end |
+        if has("errors.deadletterqueue.topic.replication.factor") then
+          .["errors.deadletterqueue.topic.replication.factor"] = $dlqReplicationFactor
+        else .
+        end
+      )
+    ' "$file"
+}
+
 register_connector() {
   NAME=$1
   FILE=$2
@@ -48,17 +75,9 @@ register_connector() {
     echo "⚠️ Connector $NAME đã tồn tại, bỏ qua đăng ký mới."
   else
     echo "🚀 Đang đăng ký Connector: $NAME..."
-    # Substitute environment variables in the JSON file
-    # Use secure temp file (mktemp) for credential storage
-    TMP_FILE=$(mktemp -t "connector-$NAME-XXXXXX.json")
-    while IFS= read -r line; do
-      line="${line//\$\{POSTGRES_USER\}/$POSTGRES_USER}"
-      line="${line//\$\{POSTGRES_PASSWORD\}/$POSTGRES_PASSWORD}"
-      line="${line//\$\{DLQ_REPLICATION_FACTOR\}/$DLQ_REPLICATION_FACTOR}"
-      line="${line//\$\{DLQ_TOLERANCE\}/$DLQ_TOLERANCE}"
-      line="${line//\$\{ELASTIC_PASSWORD\}/$ELASTIC_PASSWORD}"
-      printf '%s\n' "$line"
-    done < "$FILE" > "$TMP_FILE"
+    # Render connector JSON safely (supports special characters)
+    TMP_FILE="$(mktemp)"
+    render_connector_payload "$FILE" > "$TMP_FILE"
 
     RESPONSE=$(curl -s -w "%{http_code}" --connect-timeout 5 --max-time 15 -X POST -H "Content-Type: application/json" --data @"$TMP_FILE" http://kafka-connect:8083/connectors)
     rm -f "$TMP_FILE"
