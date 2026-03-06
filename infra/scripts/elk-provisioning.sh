@@ -67,4 +67,21 @@ if [ "$HTTP_CODE" -ge 400 ]; then
 fi
 echo "Index Template created successfully."
 
+# 3. Set password for kibana_system user (required for Kibana to connect)
+if [ ! -z "$KIBANA_PASSWORD" ]; then
+  echo "Setting password for kibana_system user..."
+  RESPONSE=$(curl -s -w "\n%{http_code}" "${AUTH_ARGS[@]}" -X POST "http://elasticsearch:9200/_security/user/kibana_system/_password" -H 'Content-Type: application/json' -d"
+  {
+    \"password\": \"$KIBANA_PASSWORD\"
+  }
+  ")
+  HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+  if [ "$HTTP_CODE" -ge 400 ]; then
+    echo "ERROR: Failed to set kibana_system password (HTTP $HTTP_CODE)"
+    echo "$RESPONSE" | sed '$d'
+    exit 1
+  fi
+  echo "kibana_system password set successfully."
+fi
+
 echo "ELK Provisioning completed!"

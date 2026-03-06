@@ -9,7 +9,7 @@ services:
   postgres:
     image: postgres:15-alpine # Dùng bản Alpine siêu nhẹ, tiết kiệm RAM cho máy tính.
     container_name: nexus-postgres # Đặt tên container cố định để dễ nhìn khi gõ lệnh 'docker ps'.
-    command: ["postgres", "-c", "wal_level=logical"] # BẬT CDC: Bắt buộc để Debezium đọc được log vật lý (WAL).
+    command: [ "postgres", "-c", "wal_level=logical" ] # BẬT CDC: Bắt buộc để Debezium đọc được log vật lý (WAL).
     ports:
       - "5432:5432" # Map port: [Port ở máy thật (để dùng DBeaver kết nối)] : [Port nội bộ của container]
     environment:
@@ -51,10 +51,7 @@ services:
     image: redis:7-alpine # Bản Alpine siêu gọn nhẹ.
     container_name: nexus-redis
     command: >
-      redis-server
-      --maxmemory 100mb
-      --maxmemory-policy allkeys-lru
-      --save ""
+      redis-server --maxmemory 100mb --maxmemory-policy allkeys-lru --save ""
     ports:
       - "6379:6379" # Port chuẩn của Redis.
     volumes:
@@ -107,7 +104,7 @@ services:
       KAFKA_HEAP_OPTS: -Xmx400m -Xms200m
       KAFKA_LOG_DIRS: /var/lib/kafka/data # Đảm bảo data được ghi vào đúng Volume (Official image mặc định ghi vào /tmp).
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1" ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -123,7 +120,7 @@ services:
   kafka-exporter:
     image: danielqsj/kafka-exporter:v1.7.0
     container_name: nexus-kafka-exporter
-    command: ["--kafka.server=kafka:9092"]
+    command: [ "--kafka.server=kafka:9092" ]
     ports:
       - "9308:9308"
     depends_on:
@@ -171,7 +168,7 @@ services:
     ports:
       - "9200:9200"
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf -k -u elastic:$$ELASTIC_PASSWORD http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1"]
+      test: [ "CMD-SHELL", "curl -sf -k -u elastic:$$ELASTIC_PASSWORD http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1" ]
       interval: 20s
       timeout: 10s
       retries: 5
@@ -237,7 +234,7 @@ services:
       - /bin/bash
       - /usr/bin/kafka-connect-init.sh
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8083/connectors || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/connectors || exit 1" ]
       interval: 10s
       timeout: 10s
       retries: 30
@@ -282,6 +279,7 @@ services:
     container_name: nexus-elk-provisioner
     environment:
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD}
     volumes:
       - ./scripts/elk-provisioning.sh:/elk-provisioning.sh
     depends_on:
