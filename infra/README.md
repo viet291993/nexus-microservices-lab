@@ -16,11 +16,12 @@ Mọi thiết lập ở đây phụ thuộc vào file `docker-compose.yml`, cho 
 | **RabbitMQ 3** | Message Broker (Sync/Async) | `5672` (AMQP) <br> `15672` (UI) | `admin` / `admin123` | Quản lý Hàng đợi (Message Queue) cho Task xử lý chậm. |
 | **Kafka 3.7.0** | Event Streaming (Pub/Sub) | `9092` | *None* | Luồng sự kiện thời gian thực (Event-Driven), Saga Pattern Choreography. |
 | **Elasticsearch 9.2.0** | Search Engine (Fast Read) | `9200` | *None* | Database phục vụ truy vấn tốc độ cao (CQRS). Hỗ trợ ES|QL mạnh mẽ. |
-| **Kibana 8.12.2** | Data Visualization (ES UI) | `5601` | *None* | Giao diện quản lý và truy vấn Elasticsearch. |
+| **Kibana 9.2.0** | Data Visualization (ES UI) | `5601` | *None* | Giao diện quản lý và truy vấn Elasticsearch. |
 | **Kafka Connect** | CDC Pipeline Engine | `8083` | *None* | Nền tảng chạy các Connector (Debezium Postgres, ES Sink) để đồng bộ dữ liệu tự động. |
 | **Keycloak 24** | Identity & Access Management | `8081` | `admin` / `admin` | Trung tâm bảo mật (OAuth2/OpenID). Cấp phát JWT Access Token, SSO. |
 
 ---
+
 
 ## 🏗️ Kiến trúc Tự động hóa CDC (Change Data Capture)
 
@@ -34,6 +35,7 @@ Hệ thống hạ tầng Nexus hỗ trợ cơ chế đồng bộ dữ liệu **T
     *   Service `cdc-provisioner` sẽ tự động đợi `kafka-connect` sẵn sàng (`service_healthy`) rồi mới tiến hành nạp cấu hình.
 
 ---
+
 
 ## 🚀 Hướng dẫn vận hành Lab (Lab Manager)
 
@@ -53,6 +55,7 @@ Cấp quyền thực thi lần đầu: `chmod +x manage.sh`, sau đó sử dụn
 - `./manage.sh {start|stop|status|logs|clean|prune}`
 
 ---
+
 
 ## 🛠️ Lưu ý về Tài nguyên (Optimization)
 Hệ thống đã được cấu hình **Resource Limits** (Giới hạn RAM) cho từng Container để đảm bảo Lab có thể chạy mượt mà trên máy cá nhân có RAM từ 16GB trở lên. 

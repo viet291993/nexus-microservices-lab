@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.context.ApplicationEventPublisher;
 
+import org.springframework.transaction.annotation.Transactional;
 import com.nexus.orderservice.elasticsearch.events.OrderSyncEvent;
 import com.nexus.orderservice.entity.OrderEntity;
 import com.nexus.orderservice.entity.OrderStatus;
@@ -40,8 +41,10 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
          * Create a new InventoryResponseConsumer and initialize its metrics.
          *
          * @param orderRepository repository for loading and persisting orders
-         * @param eventPublisher  application event publisher used to emit OrderSyncEvent events
-         * @param meterRegistry   MeterRegistry used to register Micrometer counters for confirmed and cancelled orders
+         * @param eventPublisher  application event publisher used to emit
+         *                        OrderSyncEvent events
+         * @param meterRegistry   MeterRegistry used to register Micrometer counters for
+         *                        confirmed and cancelled orders
          */
         public InventoryResponseConsumer(OrderRepository orderRepository, ApplicationEventPublisher eventPublisher,
                         MeterRegistry meterRegistry) {
@@ -56,16 +59,23 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
         }
 
         /**
-         * Handle inventory service responses to update order status, record metrics, and publish order sync events.
+         * Handle inventory service responses to update order status, record metrics,
+         * and publish order sync events.
          *
-         * Processes an InventoryResponsePayload and, based on its event type, updates the corresponding order's
-         * status to CONFIRMED or CANCELLED, increments the matching Micrometer counter, and publishes an OrderSyncEvent.
-         * The method performs idempotent checks: it skips processing when the order is already in the target status.
+         * Processes an InventoryResponsePayload and, based on its event type, updates
+         * the corresponding order's
+         * status to CONFIRMED or CANCELLED, increments the matching Micrometer counter,
+         * and publishes an OrderSyncEvent.
+         * The method performs idempotent checks: it skips processing when the order is
+         * already in the target status.
          *
-         * @param payload the inventory response containing the event type, order ID, and optional message
-         * @param headers transport-level headers supplied by the consumer; provided by the generated controller
+         * @param payload the inventory response containing the event type, order ID,
+         *                and optional message
+         * @param headers transport-level headers supplied by the consumer; provided by
+         *                the generated controller
          */
         @Override
+        @Transactional
         public void processInventoryResponse(InventoryResponsePayload payload,
                         InventoryResponsePayloadHeaders headers) {
                 InventoryResponsePayload.InventoryEventType eventType = payload.getEventType();
@@ -99,7 +109,7 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
 
                         eventPublisher.publishEvent(
                                         new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(),
-                                                        OrderStatus.CONFIRMED.name()));
+                                                        OrderStatus.CONFIRMED));
 
                 } else if (InventoryResponsePayload.InventoryEventType.INVENTORY_FAILED == eventType) {
                         // Idempotent: nếu đơn hàng đã bị CANCELLED trước đó thì bỏ qua failure event
@@ -116,7 +126,9 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
 
                         eventPublisher.publishEvent(
                                         new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(),
-                                                        OrderStatus.CANCELLED.name()));
+                                                        OrderStatus.CANCELLED));
+                } else {
+                        log.warn("❓ [CONSUMER] Nhận được InventoryEventType không xác định: {}", eventType);
                 }
         }
 }

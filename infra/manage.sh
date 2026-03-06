@@ -42,7 +42,7 @@ case "$1" in
   clean)
     echo -e "⚠️ CẢNH BÁO: Xóa toàn bộ Container và DỮ LIỆU (Volumes) của project!"
     read -r -p "Bạn có chắc chắn muốn tiếp tục? (y/N) " confirm
-    if [ "$confirm" = "y" ]; then
+    if [[ "$confirm" =~ ^[yY]$ ]]; then
       docker-compose -f "$COMPOSE_FILE" down -v
       echo "🧹 Đã dọn dẹp xong tài nguyên của project."
       echo -e "\n💡 Mẹo: Dùng './manage.sh prune' để xóa luôn các Volume rác khác."

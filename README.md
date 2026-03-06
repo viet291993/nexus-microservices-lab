@@ -30,21 +30,26 @@
 
 Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tập trung vào việc "Làm sao để các mảnh ghép kết nối và vận hành bền bỉ?" chứ không chỉ là code tính năng CRUD.
 
+
 ### 1. Infrastructure as Code (Hạ tầng là duy nhất)
+
 * Hệ thống phải có khả năng dựng lại hoàn toàn từ con số 0 chỉ bằng một lệnh: `docker-compose up -d` (từ thư mục `infra`).
 * Toàn bộ Database, Message Broker, Search Engine và Identity Provider (Keycloak) được container hóa và cấu hình sẵn mạng nội bộ.
 
 ### 2. Integration over Implementation (Kết nối là trọng tâm)
+
 * **Contract First:** Ưu tiên định nghĩa cấu trúc Event/API (ZenWave) trước khi viết logic.
 * **Resilience:** Tập trung xử lý **Retry**, **Dead Letter Queue** và **Circuit Breaker** (Resilience4j). Một mảnh vỡ không được phép làm sập toàn bộ bức tranh.
 * **Data Consistency:** Xử lý bài toán nhất quán dữ liệu qua Saga Choreography và đồng bộ CQRS giữa Postgres - Elasticsearch.
 
 ### 3. Observability is Mandatory (Giám sát là bắt buộc)
+
 * **Traceability:** Mọi request được gắn `correlation_id` xuyên suốt từ Gateway qua Kafka đến ELK Stack.
 * **Unified Dashboard:** Theo dõi sức khỏe hệ thống (CPU/RAM/Kafka Lag) qua Prometheus & Grafana.
 * **Troubleshooting Playbook:** Quy trình chuẩn để "bắt bệnh" hệ thống. 👉 [Xem chi tiết tại đây](./services/docs/troubleshooting-playbook.md)
 
 ### 4. Chaos Engineering (Mô phỏng đổ vỡ)
+
 * Chủ động "kill" service hoặc dừng Kafka để kiểm chứng khả năng tự phục hồi và tính đúng đắn của dữ liệu sau khi hệ thống ổn định trở lại.
 
 ---

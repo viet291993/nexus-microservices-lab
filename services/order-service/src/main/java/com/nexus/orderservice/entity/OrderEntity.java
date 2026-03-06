@@ -7,9 +7,9 @@ import java.util.Objects;
  * Entity JPA đại diện cho một Đơn hàng trong bảng "orders" của PostgreSQL.
  *
  * Vòng đời trạng thái của Order trong Saga:
- *   PENDING   → Đơn vừa tạo, đang chờ Inventory xử lý trừ kho.
- *   CONFIRMED → Inventory đã trừ kho thành công (INVENTORY_CONFIRMED).
- *   CANCELLED → Inventory từ chối (INVENTORY_FAILED), đơn bị hủy (Saga Rollback).
+ * PENDING → Đơn vừa tạo, đang chờ Inventory xử lý trừ kho.
+ * CONFIRMED → Inventory đã trừ kho thành công (INVENTORY_CONFIRMED).
+ * CANCELLED → Inventory từ chối (INVENTORY_FAILED), đơn bị hủy (Saga Rollback).
  */
 @Entity
 @Table(name = "orders") // Tên bảng trong PostgreSQL. Không dùng "order" vì nó là từ khóa SQL.
@@ -17,7 +17,8 @@ public class OrderEntity {
 
     /**
      * Khóa chính. Sử dụng UUID String thay vì auto-increment Long.
-     * Lý do: Trong hệ thống phân tán, UUID đảm bảo không trùng lặp giữa các instance.
+     * Lý do: Trong hệ thống phân tán, UUID đảm bảo không trùng lặp giữa các
+     * instance.
      */
     @Id
     @Column(name = "order_id", nullable = false, unique = true)
@@ -57,17 +58,45 @@ public class OrderEntity {
 
     // === GETTERS & SETTERS === //
 
-    public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
+    public String getOrderId() {
+        return orderId;
+    }
 
-    public String getProductId() { return productId; }
-    public void setProductId(String productId) { this.productId = productId; }
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
 
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public String getProductId() {
+        return productId;
+    }
 
-    public OrderStatus getStatus() { return status; }
-    public void setStatus(OrderStatus status) { this.status = status; }
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
 
     @Override
     public String toString() {
@@ -77,8 +106,10 @@ public class OrderEntity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         OrderEntity that = (OrderEntity) o;
         return Objects.equals(orderId, that.orderId);
     }

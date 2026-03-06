@@ -2,8 +2,11 @@ package com.nexus.orderservice.elasticsearch.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.event.EventListener;
+import com.nexus.orderservice.entity.OrderStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.nexus.orderservice.elasticsearch.entity.OrderDocument;
 import com.nexus.orderservice.elasticsearch.events.OrderSyncEvent;
@@ -25,17 +28,19 @@ public class OrderSyncEventListener {
      * và cập nhật ngay lập tức vào Elasticsearch (Read-side).
      * Đây chính là cơ chế Eventual Consistency cho CQRS.
      */
-    @EventListener
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderSyncEvent(OrderSyncEvent event) {
         String orderId = event.getOrderId();
-        String newStatus = event.getStatus();
+        OrderStatus newStatus = event.getStatus();
 
         log.info("🔄 [CQRS SYNC] Nhận event đồng bộ Order {} (Status: {})", orderId, newStatus);
 
-        // Kiểm tra Idempotency: Không ghi đè trạng thái cuối (CONFIRMED/CANCELLED) bằng PENDING
+        // Kiểm tra Idempotency: Không ghi đè trạng thái cuối (CONFIRMED/CANCELLED) bằng
+        // PENDING
         searchRepository.findById(orderId).ifPresentOrElse(existingDoc -> {
             if (isFinalStatus(existingDoc.getStatus())) {
-                if (!existingDoc.getStatus().equalsIgnoreCase(newStatus)) {
+                if (!existingDoc.getStatus().equalsIgnoreCase(newStatus.name())) {
                     log.warn("♻️ [CQRS IDEMPOTENT] Bỏ qua cập nhật {} cho Order {} vì đã ở trạng thái cuối: {}",
                             newStatus, orderId, existingDoc.getStatus());
                 }
@@ -52,7 +57,7 @@ public class OrderSyncEventListener {
                 event.getOrderId(),
                 event.getProductId(),
                 event.getQuantity(),
-                event.getStatus());
+                event.getStatus().name());
 
         searchRepository.save(document);
         log.info("✅ [CQRS SYNC SUCCESS] Đã lưu Order {} vào Elasticsearch Index (Status: {})",
@@ -60,6 +65,7 @@ public class OrderSyncEventListener {
     }
 
     private boolean isFinalStatus(String status) {
-        return "CONFIRMED".equalsIgnoreCase(status) || "CANCELLED".equalsIgnoreCase(status);
+        return OrderStatus.CONFIRMED.name().equalsIgnoreCase(status) ||
+                OrderStatus.CANCELLED.name().equalsIgnoreCase(status);
     }
 }

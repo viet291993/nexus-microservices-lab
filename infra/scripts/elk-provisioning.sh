@@ -1,14 +1,15 @@
 #!/bin/sh
+apk add --no-cache curl jq
 
 # Wait for Elasticsearch to be ready
 echo "Waiting for Elasticsearch to be ready..."
 
-# curl_es wraps curl to call Elasticsearch; it adds HTTP basic auth using ELASTIC_PASSWORD when set and runs curl in silent mode.
+# curl_es wraps curl to call Elasticsearch; it adds HTTP basic auth using ELASTIC_PASSWORD when set and runs curl with --fail.
 curl_es() {
   if [ -n "$ELASTIC_PASSWORD" ]; then
-    curl -s -u "elastic:$ELASTIC_PASSWORD" "$@"
+    curl -f -s -u "elastic:$ELASTIC_PASSWORD" "$@"
   else
-    curl -s "$@"
+    curl -f -s "$@"
   fi
 }
 
@@ -104,12 +105,8 @@ if [ -z "$LOGSTASH_PASSWORD" ]; then
   echo "ERROR: LOGSTASH_PASSWORD is not set"
   exit 1
 fi
-RESPONSE=$(curl_es -w "\n%{http_code}" -X POST "http://elasticsearch:9200/_security/user/logstash_writer" -H 'Content-Type: application/json' -d"
-{
-  \"password\": \"$LOGSTASH_PASSWORD\",
-  \"roles\": [\"logstash_writer\"]
-}
-")
+JSON_BODY=$(jq -n --arg pw "$LOGSTASH_PASSWORD" '{password: $pw, roles: ["logstash_writer"]}')
+RESPONSE=$(curl_es -w "\n%{http_code}" -X POST "http://elasticsearch:9200/_security/user/logstash_writer" -H 'Content-Type: application/json' -d "$JSON_BODY")
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 if [ "$HTTP_CODE" -ge 400 ]; then
   echo "ERROR: Failed to create logstash_writer user (HTTP $HTTP_CODE)"
@@ -121,11 +118,8 @@ echo "Logstash Writer role and user set up successfully."
 # 4. Set password for kibana_system user (required for Kibana to connect)
 if [ -n "$KIBANA_PASSWORD" ]; then
   echo "Setting password for kibana_system user..."
-  RESPONSE=$(curl_es -w "\n%{http_code}" -X POST "http://elasticsearch:9200/_security/user/kibana_system/_password" -H 'Content-Type: application/json' -d"
-  {
-    \"password\": \"$KIBANA_PASSWORD\"
-  }
-  ")
+  JSON_BODY=$(jq -n --arg pw "$KIBANA_PASSWORD" '{password: $pw}')
+  RESPONSE=$(curl_es -w "\n%{http_code}" -X POST "http://elasticsearch:9200/_security/user/kibana_system/_password" -H 'Content-Type: application/json' -d "$JSON_BODY")
   HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
   if [ "$HTTP_CODE" -ge 400 ]; then
     echo "ERROR: Failed to set kibana_system password (HTTP $HTTP_CODE)"

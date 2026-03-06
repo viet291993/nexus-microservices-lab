@@ -26,11 +26,20 @@ register_connector() {
     echo "⚠️ Connector $NAME đã tồn tại, bỏ qua đăng ký mới."
   else
     echo "🚀 Đang đăng ký Connector: $NAME..."
-    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" --data @"$FILE" http://kafka-connect:8083/connectors)
-    if [ "$RESPONSE" -eq 201 ]; then
-      echo "✅ Đăng ký $NAME thành công."
+    # Substitute environment variables in the JSON file
+    # We use a temporary file to hold the substituted content
+    TMP_FILE="/tmp/$NAME.json"
+    sed "s|\${POSTGRES_USER}|$POSTGRES_USER|g; \
+         s|\${POSTGRES_PASSWORD}|$POSTGRES_PASSWORD|g; \
+         s|\${DLQ_REPLICATION_FACTOR}|$DLQ_REPLICATION_FACTOR|g; \
+         s|\${DLQ_TOLERANCE}|$DLQ_TOLERANCE|g" "$FILE" > "$TMP_FILE"
+    
+    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" --data @"$TMP_FILE" http://kafka-connect:8083/connectors)
+    if [ "$RESPONSE" -eq 201 ] || [ "$RESPONSE" -eq 200 ]; then
+      echo "✅ Đăng ký $NAME thành công (HTTP $RESPONSE)."
     else
       echo "❌ Lỗi khi đăng ký $NAME (Mã lỗi: $RESPONSE)."
+      exit 1
     fi
   fi
 }

@@ -62,10 +62,6 @@ public abstract class BaseSagaIntegrationTest {
                 mongodb = new MongoDBContainer(DockerImageName.parse(MONGO_IMAGE));
 
                 log.info("🚀 Starting Elasticsearch with image: {}", ES_IMAGE);
-                if (!ES_IMAGE.contains("9.2.0")) {
-                    log.warn(
-                            "⚠️ [E2E] Warning: You are not using Elasticsearch 9.2.0. This may cause compatibility issues with Spring Boot 4.x client.");
-                }
                 elasticsearch = new ElasticsearchContainer(ES_IMAGE)
                         .withEnv("discovery.type", "single-node")
                         .withEnv("xpack.security.enabled", "false")

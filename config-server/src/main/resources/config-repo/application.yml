@@ -11,9 +11,8 @@ management:
         tags:
             application: ${spring.application.name} # Gắn tag tên ứng dụng vào mọi metrics
 
-logging:
-    logstash:
-        host: ${LOGSTASH_HOST:localhost}
-        port: ${LOGSTASH_PORT:50000}
+logstash:
+    host: ${LOGSTASH_HOST:localhost}
+    port: ${LOGSTASH_PORT:50000}
     pattern:
         level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]" # Hiển thị TraceID/SpanID trong log Console

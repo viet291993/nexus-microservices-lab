@@ -224,10 +224,10 @@ services:
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
-      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m # Giới hạn Heap để tránh OOM khi chạy với mem_limit.
+      CONNECT_CONFIG_PROVIDERS: "file"
+      CONNECT_CONFIG_PROVIDERS_FILE_CLASS: "org.apache.kafka.common.config.provider.FileConfigProvider"
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m" # Giới hạn Heap để tránh OOM khi chạy với mem_limit.
     volumes:
       - ./scripts/kafka-connect-init.sh:/usr/bin/kafka-connect-init.sh
     command:
@@ -256,8 +256,13 @@ services:
   # ==========================================
   # Mục đích: Tự động đăng ký các Connector khi Kafka Connect đã sẵn sàng.
   cdc-provisioner:
-    image: curlimages/curl:8.7.1 # Pin version cố định tránh breaking change.
+    image: curlimages/curl:8.7.1-alpine # Pin version cố định tránh breaking change.
     container_name: nexus-cdc-provisioner
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-nexus_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-nexus_password}
+      - DLQ_REPLICATION_FACTOR=${DLQ_REPLICATION_FACTOR:-1}
+      - DLQ_TOLERANCE=${DLQ_TOLERANCE:-none}
     volumes:
       - ./connectors:/connectors
       - ./scripts/cdc-provisioning.sh:/cdc-provisioning.sh
@@ -275,7 +280,7 @@ services:
   # ==========================================
   # Mục đích: Tự động thiết lập Index Lifecycle Policy (xóa log sau 7 ngày) và Index Template.
   elk-provisioner:
-    image: curlimages/curl:8.7.1 # Pin version cố định.
+    image: alpine:3.19
     container_name: nexus-elk-provisioner
     environment:
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
@@ -305,7 +310,7 @@ services:
       - "50000:50000/tcp"
       - "50000:50000/udp"
     environment:
-      - ELASTIC_PASSWORD=${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD is required} # Dùng password của logstash_writer
+      - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD is required} # Dùng password của logstash_writer
       - LS_JAVA_OPTS=-Xms256m -Xmx256m # Giới hạn heap RAM cho Logstash.
     depends_on:
       elasticsearch:

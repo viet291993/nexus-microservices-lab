@@ -19,7 +19,13 @@ public class SecurityConfig {
                         .pathMatchers("/eureka/**").permitAll() // Cho phép truy cập Eureka dashboard (nếu cần)
                         .pathMatchers("/fallback/**").permitAll() // Cho phép truy cập các route Fallback
                                                                   // (CircuitBreaker)
-                        .pathMatchers("/actuator/health", "/actuator/info").permitAll() // Mở Health và Info để Monitor
+                        .pathMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll() // Mở
+                                                                                                                // Health,
+                                                                                                                // Info
+                                                                                                                // và
+                                                                                                                // Prometheus
+                                                                                                                // để
+                                                                                                                // Monitor
                         .anyExchange().authenticated() // Mọi request khác nhắm vào backend đều phải có lệnh Token JWT
                 )
                 // Kích hoạt cấu hình Gateway trở thành OAuth2 Resource Server

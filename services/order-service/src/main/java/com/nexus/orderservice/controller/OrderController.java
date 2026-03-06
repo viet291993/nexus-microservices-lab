@@ -55,7 +55,8 @@ public class OrderController {
     private final Counter orderCreatedCounter;
 
     /**
-     * Constructs an OrderController and registers the Micrometer Counter "order_created_total"
+     * Constructs an OrderController and registers the Micrometer Counter
+     * "order_created_total"
      * used to track the number of orders created via the API.
      */
     public OrderController(OrderProducerService producerService, OrderRepository orderRepository,
@@ -69,14 +70,19 @@ public class OrderController {
     }
 
     /**
-     * Create a new order and publish an ORDER_CREATED event for downstream processing.
+     * Create a new order and publish an ORDER_CREATED event for downstream
+     * processing.
      *
-     * The request should contain the product identifier and quantity. The method persists
-     * the order with status "PENDING", publishes a sync event, sends an ORDER_CREATED event
+     * The request should contain the product identifier and quantity. The method
+     * persists
+     * the order with status "PENDING", publishes a sync event, sends an
+     * ORDER_CREATED event
      * to Kafka, and returns an immediate acknowledgment to the client.
      *
      * @param request the create order request containing `productId` and `quantity`
-     * @return a ResponseEntity with HTTP 202 (Accepted) whose body is JSON containing `orderId`, `status` ("PENDING"), and a human-readable `message`
+     * @return a ResponseEntity with HTTP 202 (Accepted) whose body is JSON
+     *         containing `orderId`, `status` ("PENDING"), and a human-readable
+     *         `message`
      */
     @PostMapping
     @Transactional
@@ -94,7 +100,7 @@ public class OrderController {
         log.info("💾 [ORDER] Đã lưu đơn hàng {} vào PostgreSQL (status=PENDING)", orderId);
 
         // Bắn sự kiện đồng bộ CQRS (Elasticsearch)
-        eventPublisher.publishEvent(new OrderSyncEvent(this, orderId, productId, quantity, OrderStatus.PENDING.name()));
+        eventPublisher.publishEvent(new OrderSyncEvent(this, orderId, productId, quantity, OrderStatus.PENDING));
 
         // Bước 3: Đóng gói và gửi event ORDER_CREATED lên Kafka.
         // Sử dụng OrderEventPayload (generated từ AsyncAPI) với builder pattern và

@@ -41,7 +41,7 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    @CachePut(value = "products", key = "#id")
+    @CachePut(value = "products", key = "#id", unless = "#result == null")
     @CacheEvict(value = "productList", allEntries = true)
     public Product updateProduct(String id, Product productDetails) {
         log.info("📝 [DB] Updating product in MongoDB: {}", id);
@@ -59,6 +59,9 @@ public class ProductService {
     })
     public void deleteProduct(String id) {
         log.info("🗑️ [DB] Deleting product from MongoDB: {}", id);
+        if (!productRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found: " + id);
+        }
         productRepository.deleteById(id);
     }
 }

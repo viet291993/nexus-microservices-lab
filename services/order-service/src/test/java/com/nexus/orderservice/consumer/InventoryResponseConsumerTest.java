@@ -14,18 +14,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 class InventoryResponseConsumerTest {
 
     private OrderRepository orderRepository;
     private ApplicationEventPublisher eventPublisher;
+    private MeterRegistry meterRegistry;
     private InventoryResponseConsumer consumer;
 
     @BeforeEach
     void setUp() {
         orderRepository = mock(OrderRepository.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
-        consumer = new InventoryResponseConsumer(orderRepository, eventPublisher);
+        meterRegistry = new SimpleMeterRegistry();
+        consumer = new InventoryResponseConsumer(orderRepository, eventPublisher, meterRegistry);
     }
 
     @Test

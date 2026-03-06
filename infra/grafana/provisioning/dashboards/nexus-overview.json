@@ -5,7 +5,7 @@
         "builtIn": 1,
         "datasource": {
           "type": "grafana",
-          "uid": "-- Graphics --"
+          "uid": "-- Grafana --"
         },
         "enable": true,
         "hide": true,
@@ -195,7 +195,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "jvm_memory_used_bytes",
+          "expr": "sum(jvm_memory_used_bytes) by (application, area)",
           "legendFormat": "{{application}} - {{area}}",
           "range": true,
           "refId": "A"
@@ -208,7 +208,10 @@
   "refresh": "5s",
   "schemaVersion": 36,
   "style": "dark",
-  "tags": ["spring-boot", "nexus"],
+  "tags": [
+    "spring-boot",
+    "nexus"
+  ],
   "templating": {
     "list": []
   },

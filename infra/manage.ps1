@@ -55,7 +55,7 @@ switch ($Action) {
     "clean" {
         Write-Host "⚠️ CẢNH BÁO: Thao tác này sẽ xóa toàn bộ Container và DỮ LIỆU (Volumes) của project!" -ForegroundColor Red
         $confirmation = Read-Host "Bạn có chắc chắn muốn tiếp tục? (y/N)"
-        if ($confirmation -eq 'y') {
+        if ($confirmation -match '^[yY]$') {
             docker-compose -f $ComposeFile down -v
             Write-Host "🧹 Đã dọn dẹp xong tài nguyên của project." -ForegroundColor Green
             

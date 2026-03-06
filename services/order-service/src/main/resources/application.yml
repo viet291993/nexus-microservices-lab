@@ -5,7 +5,7 @@ spring:
     import: "configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
   cloud:
     config:
-      username: nexus_admin
+      username: ${NEXUS_USERNAME:nexus_admin}
       password: ${CONFIG_SERVER_PASSWORD}
     function:
       definition: process-inventory-response
@@ -15,7 +15,7 @@ spring:
         process-inventory-response-in-0:
           destination: inventory-events-topic
           group: order-service-group
-        
+
         # Binding cho lệnh gửi event (trong Producer sinh ra)
         send-order-events-out-0:
           destination: order-events-topic

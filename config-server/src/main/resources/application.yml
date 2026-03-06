@@ -6,13 +6,22 @@ spring:
         name: config-server
     profiles:
         active: native
-    
+
     # BẢO MẬT CONFIG SERVER (Phase 3)
     security:
         user:
             name: nexus_admin
             password: ${CONFIG_SERVER_PASSWORD}
-    
+
+---
+spring:
+    config:
+        activate:
+            on-profile: dev
+    security:
+        user:
+            password: ${CONFIG_SERVER_PASSWORD:dev_password}
+
     # CẤU HÌNH MÃ HÓA (Để dùng {cipher} trong YAML)
     cloud:
         config:

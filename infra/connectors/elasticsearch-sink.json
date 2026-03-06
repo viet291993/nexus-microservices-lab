@@ -18,10 +18,10 @@
     "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
     "transforms.key.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
     "transforms.key.field": "order_id",
-    "errors.tolerance": "all",
+    "errors.tolerance": "${DLQ_TOLERANCE}",
     "errors.deadletterqueue.topic.name": "nexus.elasticsearch-sink.dlq",
     "errors.deadletterqueue.context.headers.enable": "true",
-    "errors.deadletterqueue.topic.replication.factor": "1",
+    "errors.deadletterqueue.topic.replication.factor": "${DLQ_REPLICATION_FACTOR}",
     "errors.log.enable": "true",
     "errors.retry.delay.max.ms": "60000"
   }

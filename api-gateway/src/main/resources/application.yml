@@ -11,4 +11,4 @@ spring:
   cloud:
     config:
       username: ${NEXUS_USERNAME:nexus_admin}
-      password: ${CONFIG_SERVER_PASSWORD:}
+      password: ${CONFIG_SERVER_PASSWORD}

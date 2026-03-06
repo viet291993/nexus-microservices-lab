@@ -1,6 +1,7 @@
+#!/usr/bin/env bash
 set -euo pipefail
 DEBEZIUM_VERSION="${DEBEZIUM_VERSION:-2.5.4.Final}"
-ES_SINK_VERSION="${ES_SINK_VERSION:-14.0.12}"
+ES_SINK_VERSION="${ES_SINK_VERSION:-14.0.3}"
 
 echo "🛠️ Đang cài đặt Debezium Postgres Connector v$DEBEZIUM_VERSION..."
 confluent-hub install --no-prompt "debezium/debezium-connector-postgresql:$DEBEZIUM_VERSION"
