@@ -6,13 +6,15 @@ spring:
   datasource:
     url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/nexus_db} # Trỏ tới Data container được dựng bởi docker-compose
     username: ${POSTGRES_USER:nexus_user}
-    password: ${POSTGRES_PASSWORD:nexus_password}
+    password: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
   jpa:
     show-sql: true # Log script SQL SQL/Query ra màn hình để dễ bắt bug lúc code.
+    hibernate:
+      ddl-auto: validate # Default fallback
 
   # CẤU HÌNH KAFKA MESSAGE BROKER (Saga Pattern)
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092} # Trỏ tay tới địa chỉ broker Kafka.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092} # Trỏ tay tới địa chỉ broker Kafka.
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -37,8 +39,8 @@ spring:
               dlq-name: inventory-events-topic.dlq # Tên Topic chứa tin nhắn chết
               dlq-partitions: 1
         binder:
-          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-      
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+
       # Chiến lược Retry (Cố gắng thử lại trước khi đẩy vào DLQ)
       bindings:
         process-inventory-response-in-0:
@@ -61,6 +63,12 @@ management:
     web:
       exposure:
         include: health,info,refresh
+  tracing:
+    sampling:
+      probability: ${SAMPLING_PROBABILITY:0.1}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://nexus-zipkin:9411/api/v2/spans}
 
 ---
 spring:
@@ -70,7 +78,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-
 ---
 spring:
   config:

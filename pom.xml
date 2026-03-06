@@ -3,6 +3,13 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.0.2</version>
+		<relativePath/>
+	</parent>
+
 	<groupId>com.nexus</groupId>
 	<artifactId>nexus-microservices-lab</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
@@ -16,17 +23,89 @@
 		<module>config-server</module>
 		<module>services/order-service</module>
 		<module>services/product-service</module>
+		<module>shared/nexus-common</module>
+		<module>shared/nexus-service-parent</module>
 	</modules>
+
+	<properties>
+		<java.version>17</java.version>
+		<spring-cloud.version>2025.1.1</spring-cloud.version>
+		<logstash-encoder.version>8.0</logstash-encoder.version>
+		<lombok.version>1.18.30</lombok.version>
+	</properties>
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- Version Management for the whole project ecosystem -->
+			<dependency>
+				<groupId>com.nexus</groupId>
+				<artifactId>nexus-common</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>${lombok.version}</version>
+				<optional>true</optional>
+			</dependency>
+
+			<!-- Logstash encoder version management -->
+			<dependency>
+				<groupId>net.logstash.logback</groupId>
+				<artifactId>logstash-logback-encoder</artifactId>
+				<version>${logstash-encoder.version}</version>
+			</dependency>
+
+			<!-- Spring Cloud Dependencies -->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
 			<!-- Force safe Guava version across all modules (CVE-2023-2976) -->
 			<dependency>
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
 				<version>33.0.0-jre</version>
 			</dependency>
+			<!-- Force safe jackson-core version (GHSA-72hv-8253-57qq) -->
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-core</artifactId>
+				<version>2.21.1</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<!-- Centrally manage plugin configuration without forcing application on every module -->
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<configuration>
+						<excludes>
+							<exclude>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok</artifactId>
+							</exclude>
+						</excludes>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>repackage</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 
 </project>

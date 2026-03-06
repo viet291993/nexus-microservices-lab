@@ -13,7 +13,7 @@ param (
     $Service = ""
 )
 
-$ComposeFile = "docker-compose.yml"
+$ComposeFile = Join-Path $PSScriptRoot "docker-compose.yml"
 
 Write-Host "`n--- [ Nexus Lab Manager ] ---" -ForegroundColor Cyan
 
@@ -55,7 +55,7 @@ switch ($Action) {
     "clean" {
         Write-Host "⚠️ CẢNH BÁO: Thao tác này sẽ xóa toàn bộ Container và DỮ LIỆU (Volumes) của project!" -ForegroundColor Red
         $confirmation = Read-Host "Bạn có chắc chắn muốn tiếp tục? (y/N)"
-        if ($confirmation -eq 'y') {
+        if ($confirmation -match '^[yY]$') {
             docker-compose -f $ComposeFile down -v
             Write-Host "🧹 Đã dọn dẹp xong tài nguyên của project." -ForegroundColor Green
             
@@ -64,9 +64,14 @@ switch ($Action) {
     }
 
     "prune" {
-        Write-Host "🧹 Đang dọn dẹp TOÀN BỘ Volume thừa (Anonymous Volumes) không sử dụng trong hệ thống..." -ForegroundColor Yellow
-        docker volume prune -f
-        Write-Host "✅ Đã dọn dẹp sạch sẽ các Volume thừa." -ForegroundColor Green
+        Write-Host "⚠️ CẢNH BÁO: Thao tác này sẽ xóa TOÀN BỘ Volume thừa (Anonymous Volumes) không sử dụng trong hệ thống!" -ForegroundColor Red
+        $confirmation = Read-Host "Bạn có chắc chắn muốn tiếp tục? (y/N)"
+        if ($confirmation -match '^[yY]$') {
+            docker volume prune -f
+            Write-Host "✅ Đã dọn dẹp sạch sẽ các Volume thừa." -ForegroundColor Green
+        } else {
+            Write-Host "❌ Đã hủy thao tác prune volumes." -ForegroundColor Gray
+        }
     }
 }
 

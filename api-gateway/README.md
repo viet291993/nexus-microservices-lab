@@ -34,6 +34,10 @@
 ./mvnw spring-boot:run
 ```
 
+> 🔐 **Bảo mật Config Server:**  
+> - Biến môi trường `CONFIG_SERVER_PASSWORD` **bắt buộc phải được cấu hình** trong môi trường staging/production.  
+> - Giá trị mặc định `dev_password` (được cấu hình trong `application.yml`) **chỉ dùng cho môi trường local/dev** để tiện phát triển.
+
 ---
 
 ## 📚 Documentation

@@ -3,6 +3,7 @@ package com.nexus.orderservice;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.orderservice.entity.OrderEntity;
+import com.nexus.orderservice.entity.OrderStatus;
 import com.nexus.orderservice.events.model.InventoryResponsePayload;
 import com.nexus.orderservice.events.model.OrderEventPayload;
 import com.nexus.orderservice.elasticsearch.entity.OrderDocument;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
@@ -29,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+@Import(SagaE2EIntegrationTest.InventoryServiceMockConfig.class)
 public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(SagaE2EIntegrationTest.class);
@@ -92,7 +95,7 @@ public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
         // 2. Chờ đợi Saga hoàn tất (Order chuyển sang CONFIRMED)
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
             OrderEntity order = orderRepository.findById(orderId).orElseThrow();
-            assertThat(order.getStatus()).isEqualTo("CONFIRMED");
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         });
 
         // 3. CQRS: Kiểm tra dữ liệu đã được đồng bộ sang Elasticsearch
@@ -129,7 +132,7 @@ public class SagaE2EIntegrationTest extends BaseSagaIntegrationTest {
         // 2. Chờ đợi Order chuyển sang CANCELLED
         await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
             OrderEntity order = orderRepository.findById(orderId).orElseThrow();
-            assertThat(order.getStatus()).isEqualTo("CANCELLED");
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         });
 
         // 3. CQRS: Kiểm tra dữ liệu rollback cũng được đồng bộ

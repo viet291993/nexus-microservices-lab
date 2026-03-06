@@ -9,15 +9,18 @@ services:
   postgres:
     image: postgres:15-alpine # Dùng bản Alpine siêu nhẹ, tiết kiệm RAM cho máy tính.
     container_name: nexus-postgres # Đặt tên container cố định để dễ nhìn khi gõ lệnh 'docker ps'.
-    command: ["postgres", "-c", "wal_level=logical"] # BẬT CDC: Bắt buộc để Debezium đọc được log vật lý (WAL).
+    # BẬT CDC: Bắt buộc để Debezium đọc được log vật lý (WAL).
+    command: ["postgres", "-c", "wal_level=logical"]
     ports:
       - "5432:5432" # Map port: [Port ở máy thật (để dùng DBeaver kết nối)] : [Port nội bộ của container]
     environment:
-      POSTGRES_USER: nexus_user # User mặc định được tạo khi DB khởi chạy lần đầu.
-      POSTGRES_PASSWORD: nexus_password # Password (sẽ dùng để config trong Spring Boot/NestJS).
+      POSTGRES_USER: ${POSTGRES_USER:-nexus_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required} # Password (sẽ dùng để config trong Spring Boot/NestJS).
       POSTGRES_DB: nexus_db # Tên database tự động được tạo sẵn.
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nexus-net
     mem_limit: 256mb
     restart: unless-stopped
 
@@ -27,15 +30,17 @@ services:
   # Mục đích: Lưu trữ dữ liệu phi cấu trúc, linh hoạt, tốc độ đọc/ghi cao.
   # Ứng dụng trong Nexus: Product Catalog (Danh mục sản phẩm đa dạng thuộc tính), Inventory.
   mongodb:
-    image: mongo:6.0 # Dùng bản 6.0 vì nó ổn định và tương thích tốt với các driver mới của Java/NodeJS.
+    image: mongo:6.0-jammy # Tối ưu: Dùng bản jammy nhẹ hơn đáng kể so với bản Ubuntu mặc định.
     container_name: nexus-mongodb
     ports:
       - "27017:27017" # Port giao tiếp chuẩn của MongoDB.
     environment:
       MONGO_INITDB_ROOT_USERNAME: root # Tài khoản quản trị cấp cao nhất (Root).
-      MONGO_INITDB_ROOT_PASSWORD: rootpassword # Mật khẩu quản trị.
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is required} # Mật khẩu quản trị.
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - nexus-net
     mem_limit: 384mb
     restart: unless-stopped
 
@@ -46,10 +51,14 @@ services:
   redis:
     image: redis:7-alpine # Bản Alpine siêu gọn nhẹ.
     container_name: nexus-redis
+    command: >
+      redis-server --maxmemory 100mb --maxmemory-policy allkeys-lru --save ""
     ports:
       - "6379:6379" # Port chuẩn của Redis.
     volumes:
       - redis_data:/data
+    networks:
+      - nexus-net
     mem_limit: 128mb
     restart: unless-stopped
 
@@ -65,7 +74,9 @@ services:
       - "15672:15672" # Port của Dashboard quản lý. Mở trình duyệt gõ localhost:15672 để xem UI.
     environment:
       RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin123
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?RABBITMQ_PASS is required}
+    networks:
+      - nexus-net
     mem_limit: 384mb
     restart: unless-stopped
 
@@ -74,32 +85,51 @@ services:
   # ==========================================
   # Mục đích: Pub/Sub luồng sự kiện lớn, nền tảng cho Saga Pattern (Choreography) phân tán Transaction.
   kafka:
-    image: confluentinc/cp-kafka:7.6.0
+    image: apache/kafka:3.7.1 # Chuyển sang Official Apache Image vì Bitnami đã rời khỏi Docker Hub công khai.
     container_name: nexus-kafka
     ports:
       - "9092:9092"
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
-      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
-      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_PROCESS_ROLES: controller,broker
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      CLUSTER_ID: '4L69Hxv9QXS-9s3X_9vS1g'
+      # JVM Tuning: Quan trọng để tránh OOM kill (Apache image mặc định Heap khá lớn).
+      KAFKA_HEAP_OPTS: -Xmx400m -Xms200m
+      KAFKA_LOG_DIRS: /var/lib/kafka/data # Đảm bảo data được ghi vào đúng Volume (Official image mặc định ghi vào /tmp).
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
     volumes:
       - kafka_data:/var/lib/kafka/data
-    mem_limit: 600mb
+    networks:
+      - nexus-net
+    mem_limit: 1024mb
+    restart: unless-stopped
+
+  # Kafka Exporter service for monitoring consumer lag
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.7.0
+    container_name: nexus-kafka-exporter
+    command: ["--kafka.server=kafka:9092"]
+    ports:
+      - "9308:9308"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - nexus-net
+    mem_limit: 128mb
     restart: unless-stopped
 
   # ==========================================
@@ -111,52 +141,72 @@ services:
     image: quay.io/keycloak/keycloak:24.0.1
     container_name: nexus-keycloak
     ports:
-      - "8081:8080" # Giao diện quản trị Admin Console sẽ chạy ở cổng 8081 (Đề phòng cổng 8080 trùng với API Gateway)
+      - "8081:8080" # Giao diện quản trị cổng 8081 (Tránh trùng cổng 8080 của API Gateway).
     environment:
-      KEYCLOAK_ADMIN: admin # Tài khoản đăng nhập trang quản trị
-      KEYCLOAK_ADMIN_PASSWORD: admin # Mật khẩu truy cập
-      # Keycloak mặc định bắt có DB/HTTPS. Start-dev ép cho nó hiểu đang chạy Local Lab (dùng local H2 DB & HTTP thường).
-    command: start-dev
+      KEYCLOAK_ADMIN: admin # Tài khoản đăng nhập trang quản trị.
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD is required}
+    command: start-dev # Chế độ phát triển (Hỗ trợ HTTP thường & H2 DB).
+    volumes:
+      - keycloak_data:/opt/keycloak/data # Lưu trữ dữ liệu Realm/User bền vững.
+    networks:
+      - nexus-net
     mem_limit: 512mb
     restart: unless-stopped
 
   # ==========================================
   # 7. SEARCH ENGINE - ELASTICSEARCH (CQRS Read-Side)
   # ==========================================
-  # Mục đích: Làm Query database cho cơ chế CQRS, lưu trữ và tìm kiếm đơn hàng tốc độ cao
+  # Mục đích: Làm Query database cho cơ chế CQRS, lưu trữ và tìm kiếm đơn hàng tốc độ cao.
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.0
+    image: elasticsearch:9.2.0 # Chuyển lên 9.2.0 để khớp Java Client trong Spring Boot 4.x
     container_name: nexus-elasticsearch
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false # Tắt security để tiện dev local
+      - xpack.security.enabled=true
+      # HTTP SSL tắt cho dev: credentials gửi cleartext trong mạng nội bộ Docker. Prod: bật SSL + mount cert.
       - xpack.security.http.ssl.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m # Hạn chế RAM tránh crash máy
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - "9200:9200"
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://127.0.0.1:9200 >/dev/null || exit 1"]
-      interval: 10s
+      test:
+        - CMD-SHELL
+        - "curl -sf -k -u elastic:$$ELASTIC_PASSWORD http://127.0.0.1:9200/_cluster/health >/dev/null || exit 1"
+      interval: 20s
       timeout: 10s
       retries: 5
+      start_period: 60s
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-    mem_limit: 800mb
+    networks:
+      - nexus-net
+    mem_limit: 1536mb # Tăng thêm để đảm bảo ổn định
     restart: unless-stopped
 
   # ==========================================
   # 8. ELASTICSEARCH DASHBOARD - KIBANA
   # ==========================================
+  # Mục đích: Giao diện UI để trực quan hóa dữ liệu và giám sát log thu thập được từ ELK Stack.
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.12.2
+    image: kibana:9.2.0
     container_name: nexus-kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD:?KIBANA_PASSWORD is required}
+      - XPACK_FLEET_ENABLED=false # Tắt Fleet Agent để khởi động nhanh hơn trong môi trường Dev.
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY:?KIBANA_ENCRYPTION_KEY is required}
     ports:
       - "5601:5601"
     depends_on:
-      - elasticsearch
-    mem_limit: 400mb
+      elasticsearch:
+        condition: service_healthy # Chờ Elasticsearch ổn định rồi mới khởi động UI.
+      elk-provisioner:
+        condition: service_completed_successfully # Chờ set password kibana_system xong.
+    networks:
+      - nexus-net
+    mem_limit: 700mb # Đủ dùng cho môi trường dev, tiết kiệm ~300MB so với mặc định.
     restart: unless-stopped
 
   # ==========================================
@@ -180,12 +230,13 @@ services:
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+      CONNECT_CONFIG_PROVIDERS: "file"
+      CONNECT_CONFIG_PROVIDERS_FILE_CLASS: "org.apache.kafka.common.config.provider.FileConfigProvider"
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m" # Giới hạn Heap để tránh OOM khi chạy với mem_limit.
     volumes:
       - ./scripts/kafka-connect-init.sh:/usr/bin/kafka-connect-init.sh
-    command: 
+    command:
       - /bin/bash
       - /usr/bin/kafka-connect-init.sh
     healthcheck:
@@ -200,7 +251,9 @@ services:
       postgres:
         condition: service_started
       elasticsearch:
-        condition: service_started
+        condition: service_healthy # Đảm bảo ES sẵn sàng trước khi kết nối Sink Connector.
+    networks:
+      - nexus-net
     mem_limit: 1024mb
     restart: unless-stopped
 
@@ -209,25 +262,141 @@ services:
   # ==========================================
   # Mục đích: Tự động đăng ký các Connector khi Kafka Connect đã sẵn sàng.
   cdc-provisioner:
-    image: curlimages/curl:latest
+    image: alpine:3.19
     container_name: nexus-cdc-provisioner
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:?POSTGRES_USER is required}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - DLQ_REPLICATION_FACTOR=${DLQ_REPLICATION_FACTOR:-1}
+      - DLQ_TOLERANCE=${DLQ_TOLERANCE:-all}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
     volumes:
       - ./connectors:/connectors
       - ./scripts/cdc-provisioning.sh:/cdc-provisioning.sh
     depends_on:
       kafka-connect:
         condition: service_healthy
+    networks:
+      - nexus-net
     command:
       - /bin/sh
       - /cdc-provisioning.sh
 
+  # ==========================================
+  # 11. ELK PROVISIONER (ILM & Template)
+  # ==========================================
+  # Mục đích: Tự động thiết lập Index Lifecycle Policy (xóa log sau 7 ngày) và Index Template.
+  elk-provisioner:
+    image: alpine:3.19
+    container_name: nexus-elk-provisioner
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?ELASTIC_PASSWORD is required}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD:?KIBANA_PASSWORD is required}
+      - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD is required}
+    volumes:
+      - ./scripts/elk-provisioning.sh:/elk-provisioning.sh
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - nexus-net
+    command:
+      - /bin/sh
+      - /elk-provisioning.sh
+
+  # ==========================================
+  # 12. CENTRALIZED LOGGING - LOGSTASH
+  # ==========================================
+  # Mục đích: Thu thập, lọc và chuyển đổi logs từ các service gửi về Elasticsearch.
+  logstash:
+    image: logstash:9.2.0
+    container_name: nexus-logstash
+    volumes:
+      - ./logstash/config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "50000:50000/tcp"
+      - "50000:50000/udp"
+    environment:
+      - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD:?LOGSTASH_PASSWORD is required} # Dùng password của logstash_writer
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m # Giới hạn heap RAM cho Logstash.
+    depends_on:
+      elasticsearch:
+        condition: service_healthy # Chờ ES sẵn sàng hoàn toàn để tránh lỗi Pipeline khi khởi động.
+      elk-provisioner:
+        condition: service_completed_successfully # Chờ tạo user logstash_writer xong.
+    networks:
+      - nexus-net
+    mem_limit: 512mb
+    restart: unless-stopped
+
+  # ==========================================
+  # 13. DISTRIBUTED TRACING - ZIPKIN
+  # ==========================================
+  # Mục đích: UI quan sát Timeline của các request đi qua nhiều microservices (Tracing visualization).
+  zipkin:
+    image: openzipkin/zipkin:3.4 # OpenZipkin là engine cực kỳ nhẹ cho Distributed Tracing.
+    container_name: nexus-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - nexus-net
+    mem_limit: 300mb
+    restart: unless-stopped
+
+  # ==========================================
+  # 14. METRICS COLLECTOR - PROMETHEUS
+  # ==========================================
+  # Mục đích: Hệ thống thu thập chỉ số (Metrics) từ Actuator của các Microservices.
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: nexus-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/kafka-dlq.rules.yml:/etc/prometheus/kafka-dlq.rules.yml:ro
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      # host-gateway: Docker Desktop (Mac/Windows) và Docker >= 20.10 trên Linux. Linux cũ: dùng host network hoặc extra_hosts với IP host tĩnh.
+      - "host.docker.internal:host-gateway"
+    networks:
+      - nexus-net
+    mem_limit: 256mb
+    restart: unless-stopped
+
+  # ==========================================
+  # 15. MONITORING DASHBOARD - GRAFANA
+  # ==========================================
+  # Mục đích: Dashboard giám sát tài nguyên (CPU, RAM) và Business Metrics trực quan.
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: nexus-grafana
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD is required}
+    depends_on:
+      - prometheus
+    networks:
+      - nexus-net
+    mem_limit: 256mb
+    restart: unless-stopped
+
+# ==========================================
+# KHAI BÁO NETWORKS
+# ==========================================
+networks:
+  nexus-net:
+    driver: bridge # Tạo mạng nội bộ riêng cho Lab để tăng tính cô lập và bảo mật.
+
 # ==========================================
 # KHAI BÁO VOLUMES (PERSISTENT STORAGE)
 # ==========================================
-# Nơi Docker đăng ký các vùng nhớ vật lý trên máy host. Bắt buộc phải khai báo nếu bên trên có dùng.
 volumes:
   postgres_data:
   mongodb_data:
   redis_data:
   kafka_data:
+  keycloak_data:
   elasticsearch_data:

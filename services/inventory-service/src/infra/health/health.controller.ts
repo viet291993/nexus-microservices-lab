@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 
@@ -23,11 +23,24 @@ export class HealthController {
    */
   @Get('readiness')
   getReadiness() {
-    const isDbConnected = this.connection.readyState === 1; // 1 = connected
+    const isDbConnected =
+      this.connection && this.connection.readyState === 1; // 1 = connected
+
+    if (!isDbConnected) {
+      throw new HttpException(
+        {
+          status: 'DOWN',
+          timestamp: new Date().toISOString(),
+          database: 'DISCONNECTED',
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+
     return {
-      status: isDbConnected ? 'UP' : 'DOWN',
+      status: 'UP',
       timestamp: new Date().toISOString(),
-      database: isDbConnected ? 'CONNECTED' : 'DISCONNECTED',
+      database: 'CONNECTED',
     };
   }
 }

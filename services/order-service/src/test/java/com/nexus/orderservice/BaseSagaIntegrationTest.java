@@ -22,9 +22,14 @@ import org.slf4j.LoggerFactory;
 public abstract class BaseSagaIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(BaseSagaIntegrationTest.class);
-    
-    private static final boolean ALLOW_HOST_FALLBACK =
-            Boolean.parseBoolean(System.getenv().getOrDefault("E2E_ALLOW_HOST_FALLBACK", "false"));
+
+    private static final boolean ALLOW_HOST_FALLBACK = Boolean
+            .parseBoolean(System.getenv().getOrDefault("E2E_ALLOW_HOST_FALLBACK", "false"));
+
+    private static final String POSTGRES_IMAGE = "postgres:15-alpine";
+    private static final String KAFKA_IMAGE = "apache/kafka:3.7.0";
+    private static final String MONGO_IMAGE = "mongo:6.0";
+    private static final String ES_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:9.2.0";
 
     @LocalServerPort
     protected int port;
@@ -42,17 +47,22 @@ public abstract class BaseSagaIntegrationTest {
         try {
             if (DockerClientFactory.instance().isDockerAvailable()) {
                 log.info("🐳 [E2E] Docker detected! Initializing Testcontainers...");
-                postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:15-alpine"))
+
+                log.info("🚀 Starting PostgreSQL with image: {}", POSTGRES_IMAGE);
+                postgres = new PostgreSQLContainer<>(DockerImageName.parse(POSTGRES_IMAGE))
                         .withDatabaseName("nexus_db")
                         .withUsername("nexus_user")
                         .withPassword("nexus_password");
 
-                kafka = new KafkaContainer(DockerImageName.parse("apache/kafka:3.7.0")
+                log.info("🚀 Starting Kafka with image: {}", KAFKA_IMAGE);
+                kafka = new KafkaContainer(DockerImageName.parse(KAFKA_IMAGE)
                         .asCompatibleSubstituteFor("confluentinc/cp-kafka"));
 
-                mongodb = new MongoDBContainer(DockerImageName.parse("mongo:6.0"));
+                log.info("🚀 Starting MongoDB with image: {}", MONGO_IMAGE);
+                mongodb = new MongoDBContainer(DockerImageName.parse(MONGO_IMAGE));
 
-                elasticsearch = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:9.2.0")
+                log.info("🚀 Starting Elasticsearch with image: {}", ES_IMAGE);
+                elasticsearch = new ElasticsearchContainer(ES_IMAGE)
                         .withEnv("discovery.type", "single-node")
                         .withEnv("xpack.security.enabled", "false")
                         .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
@@ -66,7 +76,8 @@ public abstract class BaseSagaIntegrationTest {
                 log.info("📍 Kafka: {}", kafka.getBootstrapServers());
                 log.info("📍 Elasticsearch: {}", elasticsearch.getHttpHostAddress());
             } else if (ALLOW_HOST_FALLBACK) {
-                log.warn("⚠️ [E2E] Docker not available. Falling back to local/host infrastructure. To disable, set E2E_ALLOW_HOST_FALLBACK=false");
+                log.warn(
+                        "⚠️ [E2E] Docker not available. Falling back to local/host infrastructure. To disable, set E2E_ALLOW_HOST_FALLBACK=false");
             } else {
                 throw new IllegalStateException("Docker không khả dụng cho E2E test. Fail-fast được kích hoạt.");
             }
@@ -100,7 +111,7 @@ public abstract class BaseSagaIntegrationTest {
         }
 
         if (mongodb != null && mongodb.isRunning()) {
-            registry.add("spring.data.mongodb.uri", mongodb::getReplicaSetUrl);
+            registry.add("spring.data.mongodb.uri", mongodb::getConnectionString);
         } else {
             log.info("🔗 [E2E] Connecting to host MongoDB at localhost:27017");
             registry.add("spring.data.mongodb.uri", () -> "mongodb://localhost:27017/nexus_db");

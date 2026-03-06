@@ -5,11 +5,12 @@
     "tasks.max": "1",
     "topics": "nexus.public.orders",
     "connection.url": "http://elasticsearch:9200",
-    "type.name": "_doc",
+    "connection.username": "elastic",
+    "connection.password": "${ELASTIC_PASSWORD}",
     "key.ignore": "false",
     "schema.ignore": "true",
-    "behavior.on.null.values": "delete",
-    "write.method": "upsert",
+    "behavior.on.null.values": "DELETE",
+    "write.method": "UPSERT",
     "key.converter": "org.apache.kafka.connect.json.JsonConverter",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
     "key.converter.schemas.enable": "false",
@@ -17,6 +18,12 @@
     "transforms": "unwrap,key",
     "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
     "transforms.key.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
-    "transforms.key.field": "order_id"
+    "transforms.key.field": "order_id",
+    "errors.tolerance": "${DLQ_TOLERANCE}",
+    "errors.deadletterqueue.topic.name": "nexus.elasticsearch-sink.dlq",
+    "errors.deadletterqueue.context.headers.enable": "true",
+    "errors.deadletterqueue.topic.replication.factor": "${DLQ_REPLICATION_FACTOR}",
+    "errors.log.enable": "true",
+    "errors.retry.delay.max.ms": "60000"
   }
 }

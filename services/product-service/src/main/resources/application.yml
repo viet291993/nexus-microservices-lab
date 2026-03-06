@@ -2,7 +2,7 @@ spring:
   application:
     name: product-service
   config:
-    import: "configserver:${CONFIG_SERVER_URL:http://localhost:8888/}"
+    import: "configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
   cloud:
     config:
       username: nexus_admin

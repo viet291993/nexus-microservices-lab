@@ -1,0 +1,100 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: "Nexus-Alerts"
+    folder: "Nexus Managed Alerts"
+    interval: 1m
+    rules:
+      - uid: "kafka-lag-alert"
+        title: "Kafka Consumer Lag High"
+        condition: B
+        for: 2m
+        data:
+          - refId: A
+            datasourceUid: "prometheus"
+            relativeTimeRange:
+              from: 600
+              to: 0
+            model:
+              expr: "sum(kafka_consumergroup_lag) by (group, topic)"
+          - refId: B
+            datasourceUid: "-100" # Expression
+            model:
+              type: "classic_conditions"
+              conditions:
+                - evaluator:
+                    params: [100]
+                    type: "gt"
+                  operator:
+                    type: "and"
+                  query:
+                    params: ["A"]
+                  reducer:
+                    type: "last"
+        annotations:
+          summary: "Kafka lag too high for group {{ $labels.group }} on topic {{ $labels.topic }}"
+        labels:
+          severity: warning
+
+      - uid: "high-error-rate-alert"
+        title: "High Error Rate (> 5%)"
+        condition: B
+        for: 1m
+        data:
+          - refId: A
+            datasourceUid: "prometheus"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: "(sum(rate(http_server_requests_seconds_count{status=~'5..'}[1m])) or vector(0)) / clamp_min(sum(rate(http_server_requests_seconds_count[1m])), 1) * 100"
+          - refId: B
+            datasourceUid: "-100"
+            model:
+              type: "classic_conditions"
+              conditions:
+                - evaluator:
+                    params: [5]
+                    type: "gt"
+                  operator:
+                    type: "and"
+                  query:
+                    params: ["A"]
+                  reducer:
+                    type: "last"
+        annotations:
+          summary: "Service error rate is high: {{ $values.A }}%"
+        labels:
+          severity: critical
+
+      - uid: "kafka-dlq-accumulating-alert"
+        title: "Kafka DLQ Messages Accumulating"
+        condition: B
+        for: 10m
+        data:
+          - refId: A
+            datasourceUid: "prometheus"
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: "sum by (topic) (increase(kafka_topic_partition_current_offset{topic=~\"nexus\\\\..*\\\\.dlq\"}[15m]))"
+          - refId: B
+            datasourceUid: "-100"
+            model:
+              type: "classic_conditions"
+              conditions:
+                - evaluator:
+                    params: [100]
+                    type: "gt"
+                  operator:
+                    type: "and"
+                  query:
+                    params: ["A"]
+                  reducer:
+                    type: "last"
+        annotations:
+          summary: "DLQ messages are rapidly increasing (topic {{ $labels.topic }})"
+        labels:
+          severity: warning

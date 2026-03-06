@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -142,3 +142,35 @@ vite.config.ts.timestamp-*
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# Maven
+target/
+
+# IDEs
+.idea/
+*.iml
+*.iws
+.settings/
+.classpath
+.project
+.factorypath
+.springBeans
+.recommenders
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spring Boot (target/ already in Maven; using target/, build/ without leading slash to ignore at all levels)
+*.jar
+*.war
+build/
+
+# Build Tools
+.gradle
+gradle-app.setting
+gradle/wrapper/*
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+.gradletasknamecache
+bin/

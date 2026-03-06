@@ -5,12 +5,10 @@ spring:
   # CẦU HÌNH DATABASE (MongoDB)
   data:
     mongodb:
-      uri: ${MONGO_URL}
-
-    # CẤU HÌNH REDIS
+      uri: ${MONGO_URL:mongodb://localhost:27017/nexus_db}
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 # CẤU HÌNH SERVICE DISCOVERY (EUREKA)
 eureka:
@@ -24,4 +22,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
+  tracing:
+    sampling:
+      probability: ${SAMPLING_PROBABILITY:0.1} # request sẽ được trace (configurable, default 10%)
+    export:
+      zipkin:
+        endpoint: ${ZIPKIN_ENDPOINT:http://nexus-zipkin:9411/api/v2/spans}
