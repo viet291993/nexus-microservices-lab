@@ -18,7 +18,7 @@
 	</properties>
 
 	<dependencies>
-		<!-- Common Microservice features (config, eureka, actuator, common-lib, etc.) inherited from parent -->
+		<!-- Common microservice dependencies (some are local, some inherited from parent) -->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

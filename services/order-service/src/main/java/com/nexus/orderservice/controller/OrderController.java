@@ -1,6 +1,5 @@
 package com.nexus.orderservice.controller;
 
-
 import java.util.Map;
 import java.util.UUID;
 
@@ -19,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
 
 import jakarta.validation.Valid;
 
@@ -51,12 +52,16 @@ public class OrderController {
     private final OrderProducerService producerService;
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final Counter orderCreatedCounter;
 
     public OrderController(OrderProducerService producerService, OrderRepository orderRepository,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher, MeterRegistry meterRegistry) {
         this.producerService = producerService;
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
+        this.orderCreatedCounter = Counter.builder("order_created_total")
+                .description("Total number of orders created via API")
+                .register(meterRegistry);
     }
 
     /**
@@ -97,6 +102,7 @@ public class OrderController {
                 .withEventType(OrderEventPayload.OrderEventType.ORDER_CREATED);
 
         producerService.sendOrderEvent(event);
+        orderCreatedCounter.increment();
         log.info("📤 [ORDER] Đã gửi event ORDER_CREATED vào Kafka, chờ Inventory xử lý...");
 
         // Trả ngay cho Client. Không đợi Inventory xử lý xong (Async).

@@ -12,7 +12,7 @@ spring:
 
   # CẤU HÌNH KAFKA MESSAGE BROKER (Saga Pattern)
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092} # Trỏ tay tới địa chỉ broker Kafka.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092} # Trỏ tay tới địa chỉ broker Kafka.
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -37,7 +37,7 @@ spring:
               dlq-name: inventory-events-topic.dlq # Tên Topic chứa tin nhắn chết
               dlq-partitions: 1
         binder:
-          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
 
       # Chiến lược Retry (Cố gắng thử lại trước khi đẩy vào DLQ)
       bindings:
@@ -63,9 +63,9 @@ management:
         include: health,info,refresh
   tracing:
     sampling:
-      probability: 1.0
-    zipkin:
-      tracing:
+      probability: ${SAMPLING_PROBABILITY:0.1}
+    export:
+      zipkin:
         endpoint: http://nexus-zipkin:9411/api/v2/spans
 
 ---

@@ -14,6 +14,8 @@ import com.nexus.orderservice.entity.OrderStatus;
 import com.nexus.orderservice.events.consumer.IProcessInventoryResponseConsumerService;
 import com.nexus.orderservice.events.model.InventoryResponsePayload;
 import com.nexus.orderservice.repository.OrderRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
 
 /**
  * Kafka Consumer lắng nghe phản hồi từ Inventory Service.
@@ -31,10 +33,19 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
 
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final Counter orderConfirmedCounter;
+    private final Counter orderCancelledCounter;
 
-    public InventoryResponseConsumer(OrderRepository orderRepository, ApplicationEventPublisher eventPublisher) {
+    public InventoryResponseConsumer(OrderRepository orderRepository, ApplicationEventPublisher eventPublisher,
+            MeterRegistry meterRegistry) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
+        this.orderConfirmedCounter = Counter.builder("order_confirmed_total")
+                .description("Total number of orders successfully confirmed by inventory")
+                .register(meterRegistry);
+        this.orderCancelledCounter = Counter.builder("order_cancelled_total")
+                .description("Total number of orders cancelled due to inventory failure")
+                .register(meterRegistry);
     }
 
     /**
@@ -64,10 +75,12 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
         if (InventoryResponsePayload.InventoryEventType.INVENTORY_CONFIRMED == eventType) {
             order.setStatus(OrderStatus.CONFIRMED);
             orderRepository.save(order);
+            orderConfirmedCounter.increment();
             log.info("✅ [SAGA CONFIRMED] Đơn hàng {} → CONFIRMED. Kho đã trừ.", orderId);
 
             eventPublisher.publishEvent(
-                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(), OrderStatus.CONFIRMED.name()));
+                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(),
+                            OrderStatus.CONFIRMED.name()));
 
         } else if (InventoryResponsePayload.InventoryEventType.INVENTORY_FAILED == eventType) {
             // Idempotent: nếu đơn hàng đã bị CANCELLED trước đó thì bỏ qua failure event
@@ -79,10 +92,12 @@ public class InventoryResponseConsumer implements IProcessInventoryResponseConsu
             }
             order.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(order);
+            orderCancelledCounter.increment();
             log.warn("🚫 [SAGA ROLLBACK] Đơn hàng {} → CANCELLED. Lý do: {}", orderId, message);
 
             eventPublisher.publishEvent(
-                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(), OrderStatus.CANCELLED.name()));
+                    new OrderSyncEvent(this, orderId, order.getProductId(), order.getQuantity(),
+                            OrderStatus.CANCELLED.name()));
         }
     }
 }
