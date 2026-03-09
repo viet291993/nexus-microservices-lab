@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# IDEs
+.idea
+.vscode
+*.iml
+*.iws
+
+# Build artifacts (Java)
+**/target/
+**/*.jar
+
+# Dependency directories (NodeJS)
+**/node_modules/
+**/dist/
+
+# Environment files
+.env
+infra/.env
+services/*/.env
+
+# Documentation & Misc
+docker-compose*.yml
+README.md
+docs/
+infra/
+script/
+shared/event-schemas/README.md
+
+# Log files
+*.log
+logs/
