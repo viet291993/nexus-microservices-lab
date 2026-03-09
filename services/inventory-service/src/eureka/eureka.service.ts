@@ -14,14 +14,16 @@ import { ConfigService } from '@nestjs/config';
 export class EurekaService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(EurekaService.name);
   private heartbeatInterval: NodeJS.Timeout | null = null;
+  private registrationRetryTimeout: NodeJS.Timeout | null = null;
 
   private readonly appId = 'INVENTORY-SERVICE';
   private instanceId = '';
   private eurekaUrl = '';
+  private registrationData: any = null;
 
   constructor(private readonly configService: ConfigService) {}
 
-  async onModuleInit(): Promise<void> {
+  onModuleInit(): void {
     const appPortRaw = this.configService.get<string>('PORT') ?? '8083';
     const appPort = parseInt(appPortRaw, 10);
     const serviceHost =
@@ -30,18 +32,21 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
       'localhost';
     const eurekaHost =
       this.configService.get<string>('EUREKA_HOST') ?? 'localhost';
-    const eurekaPortRaw = this.configService.get<string>('EUREKA_PORT') ?? '8761';
+    const eurekaPortRaw =
+      this.configService.get<string>('EUREKA_PORT') ?? '8761';
     const eurekaPort = parseInt(eurekaPortRaw, 10);
 
     const finalAppPort =
       isNaN(appPort) || appPort < 1 || appPort > 65535 ? 8083 : appPort;
     const finalEurekaPort =
-      isNaN(eurekaPort) || eurekaPort < 1 || eurekaPort > 65535 ? 8761 : eurekaPort;
+      isNaN(eurekaPort) || eurekaPort < 1 || eurekaPort > 65535
+        ? 8761
+        : eurekaPort;
 
     this.instanceId = `${serviceHost}:inventory-service:${finalAppPort}`;
     this.eurekaUrl = `http://${eurekaHost}:${finalEurekaPort}/eureka/apps`;
 
-    const registrationData = {
+    this.registrationData = {
       instance: {
         instanceId: this.instanceId,
         hostName: serviceHost,
@@ -78,19 +83,40 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
       },
     };
 
+    this.initiateRegistration();
+  }
+
+  onModuleDestroy(): void {
+    this.stopHeartbeats();
+    this.stopRegistrationRetry();
+    // Chúng ta không dùng await ở đây vì onModuleDestroy là synchronous, 
+    // nhưng deregister là một nỗ lực best-effort khi shutdown.
+    this.deregister().catch((err) =>
+      this.logger.error(`❌ [EUREKA] Cleanup failed: ${err.message}`),
+    );
+  }
+
+  private async initiateRegistration(): Promise<void> {
+    this.stopRegistrationRetry();
     try {
-      await this.register(registrationData);
+      await this.register(this.registrationData);
       this.startHeartbeats();
     } catch (error) {
       this.logger.error(
-        `❌ [EUREKA] Đăng ký ${this.appId} thất bại: ${error.message}`,
+        `❌ [EUREKA] Đăng ký ${this.appId} thất bại: ${error.message}. Thử lại sau 10 giây...`,
+      );
+      this.registrationRetryTimeout = setTimeout(
+        () => this.initiateRegistration(),
+        10000,
       );
     }
   }
 
-  async onModuleDestroy(): Promise<void> {
-    this.stopHeartbeats();
-    await this.deregister();
+  private stopRegistrationRetry(): void {
+    if (this.registrationRetryTimeout) {
+      clearTimeout(this.registrationRetryTimeout);
+      this.registrationRetryTimeout = null;
+    }
   }
 
   private async register(data: any): Promise<void> {
@@ -102,6 +128,7 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
         Accept: 'application/json',
       },
       body: JSON.stringify(data),
+      signal: AbortSignal.timeout(5000), // Giới hạn 5s để tránh treo startup
     });
 
     if (!response.ok && response.status !== 204) {
@@ -119,25 +146,22 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
     try {
       const response = await fetch(url, {
         method: 'DELETE',
+        signal: AbortSignal.timeout(5000),
       });
       if (response.ok || response.status === 204) {
-        this.logger.log(
-          `🛑 [EUREKA] ${this.appId} đã deregister khỏi Eureka`,
-        );
+        this.logger.log(`🛑 [EUREKA] ${this.appId} đã deregister khỏi Eureka`);
       } else {
         this.logger.warn(
           `⚠️ [EUREKA] Deregister thất bại (HTTP ${response.status})`,
         );
       }
     } catch (error) {
-      this.logger.error(
-        `❌ [EUREKA] Lỗi khi deregister: ${error.message}`,
-      );
+      this.logger.error(`❌ [EUREKA] Lỗi khi deregister: ${error.message}`);
     }
   }
 
   private startHeartbeats(): void {
-    // Eureka mặc định gia hạn sau mỗi 30 giây
+    this.stopHeartbeats(); // Đảm bảo không có interval nào chạy song song
     this.heartbeatInterval = setInterval(async () => {
       try {
         await this.renew();
@@ -145,9 +169,8 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(
           `⚠️ [EUREKA] Heartbeat thất bại: ${error.message}. Đang thử đăng ký lại...`,
         );
-        // Nếu Heartbeat thất bại (thường là 404), thử đăng ký lại toàn bộ
         if (error.message.includes('404')) {
-          this.onModuleInit();
+          this.initiateRegistration();
         }
       }
     }, 30000);
@@ -164,6 +187,7 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
     const url = `${this.eurekaUrl}/${this.appId}/${this.instanceId}`;
     const response = await fetch(url, {
       method: 'PUT',
+      signal: AbortSignal.timeout(5000),
     });
 
     if (response.status === 404) {
