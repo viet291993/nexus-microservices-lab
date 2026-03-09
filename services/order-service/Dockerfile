@@ -2,9 +2,15 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
-COPY services/order-service/pom.xml services/order-service/
-COPY services/order-service/src services/order-service/src
+# Copy all module poms
 COPY shared shared
+COPY api-gateway/pom.xml api-gateway/
+COPY eureka-server/pom.xml eureka-server/
+COPY config-server/pom.xml config-server/
+COPY services/order-service/pom.xml services/order-service/
+COPY services/product-service/pom.xml services/product-service/
+
+COPY services/order-service/src services/order-service/src
 RUN mvn -B -pl services/order-service -am install -DskipTests
 
 # Stage 2: Runtime

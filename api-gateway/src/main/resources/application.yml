@@ -10,6 +10,11 @@ spring:
     import: "optional:configserver:http://localhost:8888/"
   cloud:
     config:
+      fail-fast: true
+      retry:
+        initial-interval: 2000
+        max-interval: 10000
+        max-attempts: 6
       username: ${NEXUS_USERNAME:nexus_admin}
       # Dev: fallback dev_password. Prod: dùng ${CONFIG_SERVER_PASSWORD:?Required} trong application-prod.yml
       password: ${CONFIG_SERVER_PASSWORD:dev_password}

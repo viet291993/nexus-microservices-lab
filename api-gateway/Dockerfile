@@ -2,9 +2,15 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
-COPY api-gateway/pom.xml api-gateway/
-COPY api-gateway/src api-gateway/src
+# Copy all module poms to satisfy Maven structure
 COPY shared shared
+COPY api-gateway/pom.xml api-gateway/
+COPY eureka-server/pom.xml eureka-server/
+COPY config-server/pom.xml config-server/
+COPY services/order-service/pom.xml services/order-service/
+COPY services/product-service/pom.xml services/product-service/
+
+COPY api-gateway/src api-gateway/src
 # Bỏ qua test để build nhanh hơn trong CD
 RUN mvn -B -pl api-gateway -am install -DskipTests
 
