@@ -12,6 +12,7 @@ RUN npm run build
 
 # Stage 2: Runtime
 FROM node:24-alpine
+RUN apk update && apk upgrade --no-cache
 WORKDIR /app
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
