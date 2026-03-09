@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:22-alpine AS build
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
 # Copy package files
@@ -11,12 +11,12 @@ COPY services/inventory-service/ .
 RUN npm run build
 
 # Stage 2: Runtime
-FROM node:22-alpine
-RUN apk update && apk upgrade --no-cache
+FROM gcr.io/distroless/nodejs22-debian12:latest
 WORKDIR /app
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package*.json ./
 
 EXPOSE 3000
-CMD ["npm", "run", "start:prod"]
+# Distroless Node.js runs the file directly
+CMD ["dist/main.js"]
