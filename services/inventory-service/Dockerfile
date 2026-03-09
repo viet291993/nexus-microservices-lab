@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:24-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
 # Copy package files
@@ -11,7 +11,7 @@ COPY services/inventory-service/ .
 RUN npm run build
 
 # Stage 2: Runtime
-FROM node:24-alpine
+FROM node:22-alpine
 RUN apk update && apk upgrade --no-cache
 WORKDIR /app
 COPY --from=build /app/dist ./dist
