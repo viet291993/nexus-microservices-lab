@@ -53,9 +53,15 @@ jobs:
   validate-docker:
     name: Validate Docker Compose
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Create dummy .env for validation
+        run: cp .env.example .env
+
       - name: Validate Docker Compose File
-        run: docker compose -f infra/docker-compose.yml config
+        run: docker compose config
