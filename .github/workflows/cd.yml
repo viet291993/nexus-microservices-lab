@@ -92,23 +92,37 @@ jobs:
 
   deploy-swarm:
     needs: build-and-push
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Chạy khi push vào main HOẶC khi trigger thủ công (workflow_dispatch)
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    # Environment 'production-swarm' cho phép thiết lập approval gates trên GitHub Settings
-    environment: production-swarm # Mở comment sau khi bạn đã tạo Environment 'production-swarm' trên GitHub Settings
+    environment: production-swarm
     steps:
       - name: Checkout Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      # Kiểm tra cú pháp file docker-stack.yml trước khi tiến hành deploy
       - name: Validate stack file
         run: docker stack config -c infra/docker-stack.yml > /dev/null
 
       - name: Deploy to Docker Swarm via SSH
-        run: |
-          echo "Dumping deployment configuration for Docker Swarm..."
-          # Hướng dẫn cấu hình CD thực tế: 
-          # 1. Cần thêm secrets: SWARM_SSH_KEY (Private Key), SWARM_USER, SWARM_HOST
-          # 2. Bước này sẽ kết nối SSH Manager Node của Swarm để điều phối cập nhật (Rolling Update)
-          # 3. Sử dụng biến ${{ github.sha }} làm IMAGE_TAG để đảm bảo Rollback chính xác nếu có lỗi.
-          ls -R infra/
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SWARM_HOST }}
+          username: ${{ secrets.SWARM_USER }}
+          key: ${{ secrets.SWARM_SSH_KEY }}
+          envs: GITHUB_REPOSITORY_OWNER,GITHUB_SHA
+          script: |
+            # 1. Export biến tag để docker-stack.yml nhận diện (sử dụng 7 ký tự đầu của SHA)
+            export IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)
+            export GITHUB_REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
+            
+            # 2. Load các secrets môi trường đã chuẩn bị sẵn trên server
+            if [ -f ~/.env_nexus ]; then
+              export $(grep -v '^#' ~/.env_nexus | xargs)
+            fi
+
+            # 3. Thực hiện deploy (Cập nhật Rolling Update)
+            # --with-registry-auth giúp Manager node lấy quyền push/pull từ GHCR
+            docker stack deploy -c infra/docker-stack.yml nexus-microservices --with-registry-auth --prune
+            
+            # 4. Kiểm tra trạng thái sơ bộ
+            docker stack services nexus-microservices
