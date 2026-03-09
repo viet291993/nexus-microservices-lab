@@ -3,6 +3,7 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY api-gateway/pom.xml api-gateway/
+COPY api-gateway/src api-gateway/src
 COPY shared shared
 # Bỏ qua test để build nhanh hơn trong CD
 RUN mvn -B -pl api-gateway -am install -DskipTests

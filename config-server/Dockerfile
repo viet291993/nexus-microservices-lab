@@ -3,6 +3,7 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY config-server/pom.xml config-server/
+COPY config-server/src config-server/src
 COPY shared shared
 RUN mvn -B -pl config-server -am install -DskipTests
 

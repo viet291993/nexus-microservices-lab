@@ -2,8 +2,9 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
-COPY shared shared
 COPY services/product-service/pom.xml services/product-service/
+COPY services/product-service/src services/product-service/src
+COPY shared shared
 RUN mvn -B -pl services/product-service -am install -DskipTests
 
 # Stage 2: Runtime

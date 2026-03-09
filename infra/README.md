@@ -18,7 +18,7 @@ Mọi thiết lập ở đây phụ thuộc vào file `docker-compose.yml`, cho 
 | **Elasticsearch 9.2.0** | Search Engine (Fast Read) | `9200` | *None* | Database phục vụ truy vấn tốc độ cao (CQRS). Hỗ trợ `ES|QL` mạnh mẽ. |
 | **Kibana 9.2.0** | Data Visualization (ES UI) | `5601` | *None* | Giao diện quản lý và truy vấn Elasticsearch. |
 | **Kafka Connect** | CDC Pipeline Engine | `8083` | *None* | Nền tảng chạy các Connector (Debezium Postgres, ES Sink) để đồng bộ dữ liệu tự động. |
-| **Keycloak 24** | Identity & Access Management | `8081` | `admin` / `admin` | Trung tâm bảo mật (OAuth2/OpenID). Cắm phát JWT Access Token, SSO. |
+| **Keycloak 24** | Identity & Access Management | `8081` | `admin` / `admin` | Trung tâm bảo mật (OAuth2/OpenID). Cấp phát JWT Access Token, SSO. |
 
 ---
 
@@ -68,22 +68,29 @@ Hệ thống đã hỗ trợ quy trình triển khai tự động (Continuous De
 ### 1. GitHub Actions (CI/CD)
 Workflow `cd.yml` tự động hóa việc Build & Push Docker Images cho toàn bộ 6 services lên **GitHub Container Registry (GHCR)**.
 - **Kích hoạt:** Tự động khi push vào nhánh `main` hoặc tạo Git Tag (VD: `v1.0.0`).
-- **Bảo mật:** Sử dụng **Distroless Images** cho các Java service để loại bỏ các lỗ hổng bảo mật cấp OS.
+- **Bảo mật:** Sử dụng **Distroless Images** và Pin GitHub Actions bằng commit SHA để đảm bảo an toàn tối đa.
+- **Trạng thái:** Hiện tại hỗ trợ tự động Build & Push. Bước Deploy lên Swarm đang ở dạng **Placeholder** và yêu cầu cấu hình SSH Secrets (`SWARM_HOST`, `SWARM_SSH_KEY`) để chạy tự động hoàn toàn.
 
 ### 2. Triển khai Docker Swarm (Cluster)
-Sử dụng file `docker-stack.yml` để chạy dự án trên môi trường Cluster thực tế:
+Sử dụng file `docker-stack.yml` để chạy dự án trên môi trường Cluster thực tế.
 
+**Các bước triển khai thủ công:**
 ```bash
 # 1. Khởi tạo Swarm (nếu chưa có)
 docker swarm init
 
-# 2. Cấu hình biến môi trường (Environment Variables)
+# 2. Triển khai Stack (Yêu cầu đăng nhập GHCR)
 export GITHUB_REPOSITORY_OWNER=your_username
-# (Hoặc sử dụng file .env mẫu)
-
-# 3. Triển khai Stack
+export IMAGE_TAG=latest
 docker stack deploy -c docker-stack.yml nexus-stack
 ```
+
+**Kích hoạt Tự động hóa Deployment (Full CD):**
+Để bật tính năng tự động deploy khi merge vào `main`, bạn cần:
+1. Tạo **GitHub Environment** tên là `production-swarm`.
+2. Cấu hình **Environment Protection Rule** (ví dụ: cần có người duyệt) để kiểm soát việc rollout.
+3. Thêm các Secrets: `SWARM_HOST`, `SWARM_USER`, và `SWARM_SSH_KEY` vào Repo.
+4. Cập nhật bước `Deploy to Docker Swarm via SSH` trong `cd.yml` để sử dụng các thông tin này.
 
 **Lợi ích của Docker Swarm:**
 - **High Availability:** Tự động khôi phục container bị lỗi (`restart_policy`).

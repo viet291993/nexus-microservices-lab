@@ -2,8 +2,9 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
-COPY shared shared
 COPY services/order-service/pom.xml services/order-service/
+COPY services/order-service/src services/order-service/src
+COPY shared shared
 RUN mvn -B -pl services/order-service -am install -DskipTests
 
 # Stage 2: Runtime

@@ -3,6 +3,7 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
 COPY eureka-server/pom.xml eureka-server/
+COPY eureka-server/src eureka-server/src
 COPY shared shared
 RUN mvn -B -pl eureka-server -am install -DskipTests
 

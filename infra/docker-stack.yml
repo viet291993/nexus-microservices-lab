@@ -65,8 +65,10 @@ services:
         condition: on-failure
 
   # Nexus Business Services (Sử dụng Image từ GHCR)
+  # Lưu ý: Sử dụng biến ${IMAGE_TAG:-latest} để đảm bảo tính bất biến (immutable).
+  # Trong CD thực tế, IMAGE_TAG sẽ được gán bằng Git SHA (commit hash).
   eureka-server:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-eureka-server:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-eureka-server:${IMAGE_TAG:-latest}
     ports:
       - "8761:8761"
     networks:
@@ -80,7 +82,7 @@ services:
         condition: on-failure
 
   config-server:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-config-server:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-config-server:${IMAGE_TAG:-latest}
     ports:
       - "8888:8888"
     environment:
@@ -91,7 +93,7 @@ services:
       replicas: 1
 
   api-gateway:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-api-gateway:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-api-gateway:${IMAGE_TAG:-latest}
     ports:
       - "8080:8080"
     networks:
@@ -102,14 +104,21 @@ services:
         order: start-first
 
   order-service:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-order-service:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-order-service:${IMAGE_TAG:-latest}
+    networks:
+      - nexus-net
+    deploy:
+      replicas: 1
+
+  product-service:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-product-service:${IMAGE_TAG:-latest}
     networks:
       - nexus-net
     deploy:
       replicas: 1
 
   inventory-service:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-inventory-service:latest
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/nexus-nexus-inventory-service:${IMAGE_TAG:-latest}
     networks:
       - nexus-net
     deploy:
@@ -117,7 +126,8 @@ services:
 
 networks:
   nexus-net:
-    driver: overlay # Dùng overlay cho Docker Swarm
+    # Overlay Driver là bắt buộc để các container trên các node khác nhau trong Swarm có thể giao tiếp qua mạng riêng
+    driver: overlay
 
 volumes:
   postgres_data:
