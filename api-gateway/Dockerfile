@@ -2,14 +2,15 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
+COPY api-gateway/pom.xml api-gateway/
 COPY shared shared
-COPY services/product-service/pom.xml services/product-service/
-RUN mvn -B -pl services/product-service -am install -DskipTests
+# Bỏ qua test để build nhanh hơn trong CD
+RUN mvn -B -pl api-gateway -am install -DskipTests
 
 # Stage 2: Runtime
 FROM eclipse-temurin:17-jre-alpine
 RUN apk update && apk upgrade --no-cache
 WORKDIR /app
-COPY --from=build /app/services/product-service/target/*.jar app.jar
-EXPOSE 8082
+COPY --from=build /app/api-gateway/target/*.jar app.jar
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
