@@ -5,6 +5,12 @@ spring:
     import: "configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
   cloud:
     config:
+      # Bật fail-fast và retry để đảm bảo service chờ Config Server sẵn sàng
+      fail-fast: true
+      retry:
+        initial-interval: 2000
+        max-interval: 10000
+        max-attempts: 6
       username: nexus_admin
       password: ${CONFIG_SERVER_PASSWORD}
   

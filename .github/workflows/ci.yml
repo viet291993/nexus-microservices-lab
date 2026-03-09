@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest # Sử dụng runner chạy trên hệ điều hành Ubuntu mới nhất
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4 # Bước clone mã nguồn về runner
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4 # Cài đặt Java Development Kit
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
         with:
           java-version: '17'
           distribution: 'temurin' # Sử dụng bản phân phối Temurin (phổ biến và ổn định)
@@ -40,10 +40,10 @@ jobs:
         working-directory: services/inventory-service # Chỉ định thư mục làm việc cho các lệnh tiếp theo
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4 # Cài đặt môi trường Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
           cache: 'npm' # Lưu cache node_modules
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Create dummy .env for validation
         # Lệnh này sẽ copy file mẫu thành file .env thật để docker-compose có thể đọc được các biến (interpolation)

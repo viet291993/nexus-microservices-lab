@@ -1,0 +1,114 @@
+name: Nexus CD (Continuous Deployment)
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch: # Cho phép chạy thủ công
+
+env:
+  REGISTRY: ghcr.io
+  # Prefix cho đặt tên image trên GitHub Container Registry
+  IMAGE_NAME_PREFIX: ${{ github.repository_owner }}/nexus
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api-gateway
+            context: .
+            dockerfile: api-gateway/Dockerfile
+            image: nexus-api-gateway
+          - service: eureka-server
+            context: .
+            dockerfile: eureka-server/Dockerfile
+            image: nexus-eureka-server
+          - service: config-server
+            context: .
+            dockerfile: config-server/Dockerfile
+            image: nexus-config-server
+          - service: order-service
+            context: .
+            dockerfile: services/order-service/Dockerfile
+            image: nexus-order-service
+          - service: product-service
+            context: .
+            dockerfile: services/product-service/Dockerfile
+            image: nexus-product-service
+          - service: inventory-service
+            context: .
+            dockerfile: services/inventory-service/Dockerfile
+            image: nexus-inventory-service
+
+    steps:
+      # Pin Action bằng commit SHA thay vì tag để chống tấn công supply-chain (Security Hardening)
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        with:
+          driver: docker-container
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Trích xuất metadata như tag, label để gắn vào image một cách nhất quán
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PREFIX }}-${{ matrix.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-swarm:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # Environment 'production-swarm' cho phép thiết lập approval gates trên GitHub Settings
+    environment: production-swarm # Mở comment sau khi bạn đã tạo Environment 'production-swarm' trên GitHub Settings
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # Kiểm tra cú pháp file docker-stack.yml trước khi tiến hành deploy
+      - name: Validate stack file
+        run: docker stack config -c infra/docker-stack.yml > /dev/null
+
+      - name: Deploy to Docker Swarm via SSH
+        run: |
+          echo "Dumping deployment configuration for Docker Swarm..."
+          # Hướng dẫn cấu hình CD thực tế: 
+          # 1. Cần thêm secrets: SWARM_SSH_KEY (Private Key), SWARM_USER, SWARM_HOST
+          # 2. Bước này sẽ kết nối SSH Manager Node của Swarm để điều phối cập nhật (Rolling Update)
+          # 3. Sử dụng biến ${{ github.sha }} làm IMAGE_TAG để đảm bảo Rollback chính xác nếu có lỗi.
+          ls -R infra/

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.2</version>
+		<version>4.0.3</version>
 		<relativePath/>
 	</parent>
 
@@ -78,6 +78,14 @@
 				<artifactId>jackson-core</artifactId>
 				<version>2.21.1</version>
 			</dependency>
+
+			<!-- Resilience and Retry -->
+			<dependency>
+				<groupId>org.springframework.retry</groupId>
+				<artifactId>spring-retry</artifactId>
+				<version>2.0.11</version>
+			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 

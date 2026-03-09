@@ -61,8 +61,45 @@ Cấp quyền thực thi lần đầu: `chmod +x manage.sh`, sau đó sử dụn
 ---
 
 
-## 🛠️ Lưu ý về Tài nguyên (Optimization)
+## 🚀 Phase 5: CI/CD & Docker Swarm Deployment
 
+Hệ thống đã hỗ trợ quy trình triển khai tự động (Continuous Deployment) và chạy trên Cluster thông qua Docker Swarm.
+
+### 1. GitHub Actions (CI/CD)
+Workflow `cd.yml` tự động hóa việc Build & Push Docker Images cho toàn bộ 6 services lên **GitHub Container Registry (GHCR)**.
+- **Kích hoạt:** Tự động khi push vào nhánh `main` hoặc tạo Git Tag (VD: `v1.0.0`).
+- **Bảo mật:** Sử dụng **Distroless Images** và Pin GitHub Actions bằng commit SHA để đảm bảo an toàn tối đa.
+- **Trạng thái:** Hiện tại hỗ trợ tự động Build & Push. Bước Deploy lên Swarm đang ở dạng **Placeholder** và yêu cầu cấu hình SSH Secrets (`SWARM_HOST`, `SWARM_SSH_KEY`) để chạy tự động hoàn toàn.
+
+### 2. Triển khai Docker Swarm (Cluster)
+Sử dụng file `docker-stack.yml` để chạy dự án trên môi trường Cluster thực tế.
+
+**Các bước triển khai thủ công:**
+```bash
+# 1. Khởi tạo Swarm (nếu chưa có)
+docker swarm init
+
+# 2. Triển khai Stack (Yêu cầu đăng nhập GHCR)
+export GITHUB_REPOSITORY_OWNER=your_username
+export IMAGE_TAG=latest
+docker stack deploy -c docker-stack.yml nexus-stack
+```
+
+**Kích hoạt Tự động hóa Deployment (Full CD):**
+Để bật tính năng tự động deploy khi merge vào `main`, bạn cần:
+1. Tạo **GitHub Environment** tên là `production-swarm`.
+2. Cấu hình **Environment Protection Rule** (ví dụ: cần có người duyệt) để kiểm soát việc rollout.
+3. Thêm các Secrets: `SWARM_HOST`, `SWARM_USER`, và `SWARM_SSH_KEY` vào Repo.
+4. Cập nhật bước `Deploy to Docker Swarm via SSH` trong `cd.yml` để sử dụng các thông tin này.
+
+**Lợi ích của Docker Swarm:**
+- **High Availability:** Tự động khôi phục container bị lỗi (`restart_policy`).
+- **Scaling:** Dễ dàng tăng số lượng bản sao (VD: `api-gateway` mặc định chạy 2 replicas).
+- **Overlay Network:** Giao tiếp bảo mật giữa các Service trên nhiều Node.
+
+---
+
+## 🛠️ Lưu ý về Tài nguyên (Optimization)
 Hệ thống đã được cấu hình **Resource Limits** (Giới hạn RAM) cho từng Container để đảm bảo Lab có thể chạy mượt mà trên máy cá nhân có RAM từ 16GB trở lên.
 
 Nếu máy bạn bị giật lag, hãy dùng lệnh `status` để kiểm tra container nào đang chiếm dụng nhiều tài nguyên nhất.

@@ -31,6 +31,9 @@ import { InventoryModule } from './inventory/inventory.module';
           'MONGODB_URI',
           'mongodb://root:rootpassword@localhost:27017/nexus_inventory?authSource=nexus_inventory',
         ),
+        // Tự động thử lại kết nối 5 lần, mỗi lần cách nhau 5 giây nếu MongoDB chưa sẵn sàng (Wait for DB)
+        retryAttempts: 5,
+        retryDelay: 5000,
       }),
     }),
 
