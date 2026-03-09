@@ -56,6 +56,22 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 
 ---
 
+## 🚀 Quick Start (Chạy toàn bộ hệ thống)
+
+Bạn có thể khởi chạy **TOÀN BỘ** hạ tầng và các Microservices chỉ bằng một câu lệnh duy nhất từ thư mục gốc:
+
+```bash
+docker-compose -f docker-compose.all.yml up -d --build
+```
+
+> [!IMPORTANT]
+> - **Yêu cầu:** Máy tính có RAM >= 16GB.
+> - **Thời gian:** Lần đầu chạy sẽ mất khoảng 5-10 phút để tải images và build source code (Java/NodeJS).
+> - **Truy cập:** 
+>   - API Gateway: `http://localhost:8080`
+>   - Eureka Dashboard: `http://localhost:8761`
+>   - Zipkin Tracing: `http://localhost:9411`
+
 ## 🚀 Research & Development Roadmap
 
 ### Phase 1: Foundation & Connectivity — 100%
