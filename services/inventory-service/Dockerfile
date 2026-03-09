@@ -1,6 +1,6 @@
 # Stage 1: Build
-FROM node:22.13-alpine3.21 AS build
-RUN apk update && apk upgrade --no-cache
+FROM node:22-bookworm-slim AS build
+RUN apt-get update && apt-get upgrade -y && apt-get clean
 WORKDIR /app
 
 # Copy package files
