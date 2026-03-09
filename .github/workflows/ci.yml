@@ -50,7 +50,7 @@ jobs:
           cache-dependency-path: services/inventory-service/package-lock.json
 
       - name: Install Dependencies
-        run: npm ci # Lệnh cài đặt dependency sạch (dựa trên package-lock.json)
+        run: npm install # Sử dụng install để tự động cập nhật nếu cần, thay vì ci nếu lockfile có thể lệch
 
       - name: Run Tests
         run: npm test # Chạy bộ unit test của project
