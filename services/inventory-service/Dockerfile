@@ -7,6 +7,9 @@ WORKDIR /app
 COPY services/inventory-service/package*.json ./
 RUN npm install
 
+# Copy shared event schemas (required by generate-models.ts prebuild script)
+COPY shared/event-schemas/ /shared/event-schemas/
+
 # Copy source and build
 COPY services/inventory-service/ .
 # Build và thực hiện prune --omit=dev để giảm kích thước image, chỉ giữ lại production dependencies
