@@ -73,7 +73,7 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
           '@enabled': 'false',
         },
         countryId: 1,
-        dataCenterInfo: {
+        datacenterInfo: {
           '@class': 'com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo',
           name: 'MyOwn',
         },

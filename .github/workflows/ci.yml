@@ -1,34 +1,39 @@
-name: Continuous Integration
+# Nexus CI Workflow
 
-# Cấu hình các điều kiện kích hoạt workflow
+# Tên workflow hiển thị trên GitHub Actions
+name: Nexus CI
+
+# Quy tắc kích hoạt workflow
 on:
-  pull_request:
-    branches: [main] # Chạy khi có Pull Request vào nhánh main
   push:
-    branches: [main] # Chạy khi có code được push trực tiếp lên nhánh main
+    branches: [ main ] # Chạy khi push code vào nhánh main
+  pull_request:
+    branches: [ main ] # Chạy khi tạo hoặc cập nhật Pull Request vào nhánh main
 
 jobs:
-  # Job 1: Kiểm tra build cho các dịch vụ Java (Maven)
+  # Job 1: Build và kiểm tra các dự án Java (Maven)
   build-maven:
     name: Build Maven Projects
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Sử dụng runner chạy trên hệ điều hành Ubuntu mới nhất
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4 # Lấy mã nguồn từ repository
+        uses: actions/checkout@v4 # Bước clone mã nguồn về runner
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4 # Cài đặt môi trường Java 17
+        uses: actions/setup-java@v4 # Cài đặt Java Development Kit
         with:
           java-version: '17'
-          distribution: 'temurin'
-          cache: 'maven' # Lưu cache các thư viện Maven để tăng tốc cho lần chạy sau
+          distribution: 'temurin' # Sử dụng bản phân phối Temurin (phổ biến và ổn định)
+          cache: 'maven' # Tự động lưu cache các thư viện Maven để tăng tốc độ build
 
-      - name: Build and Verify with Maven
-        run: mvn -B verify -DskipTests # Biên dịch và kiểm tra cấu hình toàn bộ dự án Java
+      - name: Build with Maven
+        # Chạy lệnh Maven verify nhưng bỏ qua các bài test để kiểm tra cấu hình pom.xml và build cơ bản
+        # -B: Batch mode (không log quá nhiều chi tiết)
+        run: mvn -B verify -DskipTests
 
-  # Job 2: Kiểm tra build và test cho dịch vụ Node.js (Inventory Service)
+  # Job 2: Build và kiểm tra dự án Node.js (inventory-service)
   build-node:
-    name: Build and Test Node.js (Inventory Service)
+    name: Build Inventory Service (Node.js)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -40,33 +45,31 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4 # Cài đặt môi trường Node.js
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm' # Lưu cache node_modules
           cache-dependency-path: services/inventory-service/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci # Cài đặt các thư viện Node.js một cách sạch sẽ
+      - name: Install Dependencies
+        run: npm install # Sử dụng install để tự động cập nhật nếu cần, thay vì ci nếu lockfile có thể lệch
 
       - name: Run Tests
-        run: npm test # Chạy các unit test của NestJS
+        run: npm test # Chạy bộ unit test của project
 
-      - name: Build project
-        run: npm run build # Đảm bảo code có thể build thành công ra thư mục dist/
+      - name: Build Project
+        run: npm run build # Chạy lệnh build để kiểm tra biên dịch TypeScript
 
-  # Job 3: Kiểm tra tính hợp lệ của cấu hình Docker
+  # Job 3: Kiểm tra cấu hình Docker Compose trong thư mục infra
   validate-docker:
     name: Validate Docker Compose
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: infra # Chuyển vào thư mục chứa cấu hình hạ tầng
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Create dummy .env for validation
-        # Copy file mẫu sang .env để Docker Compose có đủ các biến môi trường cần thiết khi kiểm tra
-        run: cp .env.example .env
+        # Lệnh này sẽ copy file mẫu thành file .env thật để docker-compose có thể đọc được các biến (interpolation)
+        run: cp infra/.env.example infra/.env
 
-      - name: Validate Docker Compose File
-        run: docker compose config # Kiểm tra cú pháp và cấu trúc file docker-compose.yml
+      - name: Check Docker Compose Config
+        # Sử dụng docker compose config để kiểm tra cú pháp file yaml mà không cần chạy các container thực tế
+        run: docker compose -f infra/docker-compose.yml config
