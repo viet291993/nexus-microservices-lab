@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:22-alpine AS build
+FROM node:22.13-alpine3.21 AS build
 RUN apk update && apk upgrade --no-cache
 WORKDIR /app
 
