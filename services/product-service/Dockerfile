@@ -7,9 +7,9 @@ COPY services/product-service/pom.xml services/product-service/
 RUN mvn -B -pl services/product-service -am install -DskipTests
 
 # Stage 2: Runtime
-FROM eclipse-temurin:17-jre-alpine
-RUN apk update && apk upgrade --no-cache
+FROM gcr.io/distroless/java17-debian12:latest
 WORKDIR /app
 COPY --from=build /app/services/product-service/target/*.jar app.jar
 EXPOSE 8082
+USER nonroot:nonroot
 ENTRYPOINT ["java", "-jar", "app.jar"]
