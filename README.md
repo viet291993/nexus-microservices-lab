@@ -95,8 +95,35 @@ Làm dự án Lab theo tư duy của một **Kiến trúc sư (Architect)** tậ
 
 ---
 
-## 🧠 Lab Notes (Key Learnings)
+## 🧠 Tổng hợp Bài học & Kinh nghiệm (Key Learnings & Achievements)
 
-1. **Connect the dots:** Trọng tâm dự án không nằm ở cú pháp Java/NodeJS mà nằm ở cách điều phối tin nhắn qua Kafka và quản lý trạng thái phân tán.
-2. **Standardization:** Việc áp dụng `correlation_id` và chuẩn hóa Log format là "cứu cánh" duy nhất khi hệ thống Microservices trở nên phức tạp.
-3. **Troubleshoot before Fix:** Luôn dùng Playbook để xác định nguyên nhân tại Monitor/Log trước khi thay đổi bất kỳ dòng code nào.
+Thông qua quá trình xây dựng **Nexus Microservices Lab** từ con số 0 đến tự động hóa hoàn toàn, dưới đây là những kiến thức thực tiễn có giá trị nhất đã được đúc kết:
+
+### 1. Giải quyết bài toán "Bất đồng ngôn ngữ" (Polyglot Architecture)
+- Quản lý 2 hệ sinh thái **Java (Spring Boot)** và **NodeJS (NestJS)** hoạt động cùng nhau.
+- **Bài học:** Việc sử dụng một "Nguồn chân lý" chung (Source of Truth) cho Event Schema (`shared/event-schemas/asyncapi.yaml`) kết hợp công cụ sinh mã (`@asyncapi/modelina`) đã giúp giải quyết triệt để rủi ro lệch chuẩn dữ liệu (Schema Drift) giữa hai ngôn ngữ.
+
+### 2. Làm chủ các Mẫu thiết kế (Microservices Patterns)
+- **Saga Pattern (Choreography):** Thành thạo cách chia nhỏ một Transaction nguyên khối thành các Local Transactions. Học được tầm quan trọng của **Compensation Logic** (Hoàn tác) khi có lỗi xảy ra ở các bước tiếp theo (ví dụ: trừ kho thất bại phải báo hủy đơn hàng).
+- **CQRS & CDC (Change Data Capture):** Tách biệt Database Đọc/Ghi. Áp dụng **Debezium** đọc WAL Log từ PostgreSQL, tự động đẩy qua Kafka Connect (Sink Connector) vào Elasticsearch. Xử lý triệt để Technical Debt của việc code "đồng bộ tay" (Sync thủ công) giữa các database.
+- **Cache-Aside Pattern:** Ứng dụng Redis để tăng tốc API Đọc, cũng như xử lý các vấn đề Invalidation khi dữ liệu gốc bị thay đổi cấp thời.
+
+### 3. Thiết kế hệ thống chịu lỗi (Fault Tolerance & Resilience)
+- Hệ thống phân tán *rất dễ sập cục bộ*. Việc ứng dụng **Circuit Breaker** (Resilience4j) đã ngăn chặn lỗi lan truyền (Cascading Failure).
+- Bài học đắt giá về **Dead Letter Queue (DLQ)**: Mọi Consumer trong Kafka đều phải có DLQ để cách ly các "Poison Pill" (Tin nhắn lỗi format, lỗi logic) tránh việc hệ thống liên tục retry vô hạn làm nghẽn luồng xử lý chính.
+- Bảo vệ Gateway bằng thuật toán **Token Bucket** Rate Limiting.
+
+### 4. Giám sát hệ thống toàn diện (Observability is Mandatory)
+- Trong một mớ bòng bong hàng chục container, nếu hệ thống "mù" thì không thể trace lỗi.
+- **Bài học:** Bắt buộc phải có **Correlation ID** đính kèm mọi request/log.
+- Trải nghiệm thực tế với **ELK Stack (Logstash, Kibana)** để gom log tập trung, **Zipkin** để xem Request Timeline (Tracing), và **Prometheus/Grafana** để đo hiệu suất phần cứng & Kafka Lag. Thiết lập thành công ILM (Index Lifecycle) để tự dọn dẹp log cũ lưu trữ.
+
+### 5. Tự động hóa Hạ tầng & CI/CD (DevOps Mindset)
+- **Bảo mật:** Loại bỏ việc lưu Secret dạng plain text trên Config Repo bằng **Spring Cloud Config JCE Encryption** (`{cipher}`).
+- **Infrastructure Automation:** Phát triển `cdc-provisioner` tự động thiết lập hạ tầng khi hệ thống vừa "boot" thay vì phải chạy các lệnh `curl` bằng tay.
+- **CI/CD vững chắc:** Hoàn thiện pipeline GitHub Actions:
+  - Docker Buildx sử dụng `driver: docker-container` và cache `mode=min` để tránh vỡ giới hạn 10GB của GitHub.
+  - Pin cứng (Hard-pin) SHA của các Github Action chống hiểm họa supply-chain.
+  - Xây dựng workflow **Zero-Downtime Deployment** tới máy chủ thực tế thông qua SSH và **Docker Swarm Rolling Update**.
+
+***"Microservices không phải là về code, mà là về cách quản lý sự phân tán, kết nối, và tự phục hồi của hàng chục tiến trình nhỏ lẻ!"***
