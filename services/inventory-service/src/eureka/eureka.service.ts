@@ -7,6 +7,16 @@ import {
 import { ConfigService } from '@nestjs/config';
 
 /**
+ * Custom error class to identify when an instance is not found in Eureka (404).
+ */
+class EurekaNotFoundError extends Error {
+  constructor() {
+    super('Instance not found in Eureka (404)');
+    this.name = 'EurekaNotFoundError';
+  }
+}
+
+/**
  * Custom Eureka Client using native fetch (Node.js 18+)
  * Replaces 'eureka-js-client' to remove deprecated 'request' dependencies.
  */
@@ -98,6 +108,7 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
 
   private async initiateRegistration(): Promise<void> {
     this.stopRegistrationRetry();
+    this.stopHeartbeats(); // Dừng heartbeat để tránh việc thực hiện đăng ký chồng chéo
     try {
       await this.register(this.registrationData);
       this.startHeartbeats();
@@ -169,7 +180,8 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(
           `⚠️ [EUREKA] Heartbeat thất bại: ${error.message}. Đang thử đăng ký lại...`,
         );
-        if (error.message.includes('404')) {
+        // Kiểm tra xem có phải là lỗi 404 không để đăng ký lại
+        if (error instanceof EurekaNotFoundError) {
           this.initiateRegistration();
         }
       }
@@ -191,7 +203,7 @@ export class EurekaService implements OnModuleInit, OnModuleDestroy {
     });
 
     if (response.status === 404) {
-      throw new Error(`HTTP 404: Instance not found`);
+      throw new EurekaNotFoundError(); // Ném ra lỗi tùy chỉnh thay vì string matching
     }
 
     if (!response.ok && response.status !== 204) {
